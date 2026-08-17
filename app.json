@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Food-app-react",
-    "slug": "Food-app-react",
+    "name": "Cravely",
+    "slug": "Cravely",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

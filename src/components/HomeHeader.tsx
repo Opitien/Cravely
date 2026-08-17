@@ -8,8 +8,8 @@ export default function HomeHeader() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.textContainer}>
-          <Text style={styles.greeting}>Good evening 👋</Text>
-          <Text style={styles.subtitle}>What are you craving today?</Text>
+          <Text style={styles.brandName}>CRAVELY</Text>
+          <Text style={styles.subtitle}>Your cravings, delivered.</Text>
         </View>
         <Image
           source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80' }}
@@ -34,14 +34,15 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
   },
-  greeting: {
-    fontSize: Typography.sizes.small,
-    color: '#666',
-    marginBottom: 4,
-  },
-  subtitle: {
+  brandName: {
     fontSize: Typography.sizes.large,
     fontWeight: Typography.weights.bold,
+    color: Colors.light.primary,
+    marginBottom: 4,
+    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: Typography.sizes.small,
     color: Colors.light.text,
   },
   avatar: {

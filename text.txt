@@ -1,0 +1,179 @@
+Prompt 1: Project structure ✅
+Prompt 2: Home + restaurant cards ← you're here
+Prompt 3: Restaurant details screen
+Prompt 4: Add-to-cart functionality
+Prompt 5: Cart screen
+Prompt 6: Checkout UI
+Prompt 7: State management
+Prompt 8: Backend/database
+Prompt 9: Authentication
+Prompt 10: Orders
+Prompt 11: Payments
+Prompt 12: Polish + production readiness
+
+
+We now have the initial React Native + Expo + TypeScript + Expo Router project structure.
+
+I want to build the first real feature: the Home screen for my food delivery app.
+
+IMPORTANT:
+I am learning React Native, so do not over-engineer this. Keep the implementation simple, readable, and beginner-friendly. Explain what you are doing and why.
+
+## Goal
+
+Build a polished but simple food delivery Home screen using local mock data only.
+
+The Home screen should contain:
+
+1. A header
+   - Greeting such as "Good evening 👋"
+   - Short subtitle such as "What are you craving today?"
+   - A profile/avatar button on the right
+
+2. A search bar
+   - Search icon
+   - Placeholder: "Search for restaurants or food"
+   - It does not need to perform real searching yet
+
+3. A horizontal food category list
+   - Examples:
+     - All
+     - Burgers
+     - Pizza
+     - Chicken
+     - African
+     - Drinks
+   - Each category should have a simple visual/icon or emoji
+   - Make the category list horizontally scrollable
+   - The selected category should have a different visual state
+   - It does not need to actually filter restaurants yet
+
+4. A "Popular near you" section
+   - Display restaurant cards in a vertical list
+
+5. Each restaurant card should contain:
+   - Restaurant image
+   - Restaurant name
+   - Food category
+   - Rating
+   - Estimated delivery time
+   - Delivery fee
+   - Optional favorite/heart button
+
+Example:
+
+Restaurant: Chicken Republic
+Category: Chicken • Fast Food
+Rating: 4.6
+Delivery: 25-35 min
+Fee: ₦800
+
+6. Add a "See all" button beside the Popular near you heading.
+   - It does not need to do anything yet.
+
+## Components
+
+Do NOT put everything inside the Home screen.
+
+Create reusable components such as:
+
+- HomeHeader
+- SearchBar
+- CategoryList
+- CategoryItem
+- RestaurantCard
+- RestaurantList
+
+Put them in the components folder according to the project structure we created earlier.
+
+The Home screen should mainly compose these components together.
+
+## Mock data
+
+Create a simple mock restaurant data file.
+
+Use around 6-8 restaurants.
+
+Each restaurant should have:
+
+- id
+- name
+- image
+- category
+- rating
+- deliveryTime
+- deliveryFee
+
+Use realistic Nigerian restaurant/food names and prices in Naira.
+
+Do not use a backend or API.
+
+## React Native concepts I want to learn
+
+Use this feature to demonstrate:
+
+- components
+- props
+- TypeScript interfaces/types
+- FlatList
+- horizontal FlatList
+- ScrollView where appropriate
+- Pressable
+- Image
+- useState for the selected category
+- StyleSheet or the existing styling system
+- reusable components
+
+Avoid unnecessary libraries.
+
+## Design
+
+Make the UI feel like a modern food delivery application.
+
+Use:
+
+- clean spacing
+- rounded restaurant cards
+- clear typography
+- good hierarchy
+- subtle borders/shadows where appropriate
+- responsive layout
+- proper Safe Area handling
+- a consistent color/theme system
+
+Keep the design relatively simple because I am learning.
+
+## Important restrictions
+
+Do NOT implement:
+
+- backend
+- authentication
+- database
+- payments
+- real search
+- API requests
+- real location services
+- cart functionality
+- restaurant details functionality
+
+Those will be later lessons.
+
+For now, clicking a restaurant can simply log the restaurant or be a placeholder.
+
+## Before coding
+
+First explain:
+
+1. Which files you are going to create/change.
+2. Why each component exists.
+3. How data will flow from the mock data into RestaurantCard.
+4. Why FlatList is appropriate for the restaurant list.
+
+Then implement the feature.
+
+After implementation, explain the code to me as a beginner.
+
+Finally, give me 3 small exercises I can do myself to practice what I just learned.
+
+Do not move on to the next feature automatically.

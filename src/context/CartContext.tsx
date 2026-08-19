@@ -5,6 +5,7 @@ interface CartContextType {
   items: CartItem[];
   addToCart: (item: MenuItem, restaurant: Restaurant) => void;
   removeFromCart: (itemId: string) => void;
+  increaseQuantity: (itemId: string) => void;
   clearCart: () => void;
   cartTotal: number;
   totalItems: number;
@@ -65,6 +66,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const increaseQuantity = (itemId: string) => {
+    setItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
+      )
+    );
+  };
+
   const clearCart = () => {
     setItems([]);
   };
@@ -75,6 +84,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         items,
         addToCart,
         removeFromCart,
+        increaseQuantity,
         clearCart,
         cartTotal,
         totalItems,

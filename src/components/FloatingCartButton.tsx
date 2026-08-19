@@ -6,7 +6,7 @@ import Colors from '../constants/Colors';
 import Typography from '../constants/Typography';
 
 export default function FloatingCartButton() {
-  const { totalItems, cartTotal } = useCart();
+  const { totalItems, cartTotal, clearCart } = useCart();
   const router = useRouter();
 
   // If the cart is empty, don't show the button at all
@@ -25,9 +25,13 @@ export default function FloatingCartButton() {
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{totalItems}</Text>
         </View>
-        
+
         <Text style={styles.buttonText}>View Cart</Text>
-        
+
+        <TouchableOpacity onPress={clearCart}>
+          <Text style={styles.buttonText}>Clear Cart</Text>
+        </TouchableOpacity>
+
         <Text style={styles.priceText}>₦{cartTotal.toLocaleString()}</Text>
       </TouchableOpacity>
     </View>
@@ -43,7 +47,7 @@ const styles = StyleSheet.create({
     zIndex: 100, // Make sure it stays on top of lists
   },
   button: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#FF0000',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

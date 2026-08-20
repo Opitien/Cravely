@@ -1,26 +1,47 @@
 import { Stack } from 'expo-router';
 import { CartProvider } from '../src/context/CartContext';
 import { FavoritesProvider } from '../src/context/FavoritesContext';
+import { AuthProvider } from '../src/context/AuthContext';
 
-// Root layout to handle main navigation stack
 export default function RootLayout() {
   return (
-    <FavoritesProvider>
-      <CartProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-          <Stack.Screen name="restaurant/[id]" options={{ title: 'Restaurant Details' }} />
-          <Stack.Screen name="checkout/index" options={{ title: 'Checkout' }} />
-          <Stack.Screen 
-            name="checkout/success" 
-            options={{ 
-              headerShown: false, 
-              gestureEnabled: false // Prevent swiping back on iOS
-            }} 
-          />
-        </Stack>
-      </CartProvider>
-    </FavoritesProvider>
+    <AuthProvider>
+      <FavoritesProvider>
+        <CartProvider>
+          <Stack>
+            {/* Main app tabs */}
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+            {/* Auth screens — no header */}
+            <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+            <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
+
+            {/* User profile screen */}
+            <Stack.Screen
+              name="user-profile/index"
+              options={{ headerShown: false }}
+            />
+
+            {/* Restaurant details */}
+            <Stack.Screen
+              name="restaurant/[id]"
+              options={{ title: 'Restaurant Details' }}
+            />
+
+            {/* Checkout flow */}
+            <Stack.Screen name="checkout/index" options={{ title: 'Checkout' }} />
+            <Stack.Screen
+              name="checkout/success"
+              options={{
+                headerShown: false,
+                gestureEnabled: false,
+              }}
+            />
+
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </CartProvider>
+      </FavoritesProvider>
+    </AuthProvider>
   );
 }

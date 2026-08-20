@@ -21,9 +21,14 @@ const FAKE_DELAY_MS = 1500;
  * Simulates a GET /restaurants request.
  */
 export function getRestaurants(): Promise<Restaurant[]> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
-      resolve(mockRestaurants);
+      if (Math.random() > 0.8) {
+        reject(new Error('Network error!')); // Simulates a server crash
+      }
+      else {
+        resolve(mockRestaurants);
+      }
     }, FAKE_DELAY_MS);
   });
 }
@@ -34,10 +39,16 @@ export function getRestaurants(): Promise<Restaurant[]> {
  * Returns the restaurant if found, or null if not found (a 404).
  */
 export function getRestaurantById(id: string): Promise<Restaurant | null> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
       const restaurant = mockRestaurants.find((r) => r.id === id) ?? null;
-      resolve(restaurant);
+      // Inside the Promise, before resolve(), add:
+      if (Math.random() > 0.7) {
+        reject(new Error('Network error!')); // Simulates a server crash
+      }
+      else {
+        resolve(restaurant);
+      }
     }, FAKE_DELAY_MS);
   });
 }

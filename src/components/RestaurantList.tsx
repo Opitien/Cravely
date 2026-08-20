@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import RestaurantCard from './RestaurantCard';
 import { Restaurant } from '../types';
@@ -10,28 +17,36 @@ import Colors from '../constants/Colors';
 export default function RestaurantList() {
   const router = useRouter();
 
-  // --- NEW: State for our fetched data ---
-  // restaurants: starts as an empty array, gets filled when the API responds
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  // isLoading: true while waiting for the API, false when done
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // --- NEW: useEffect to fetch data when the component first mounts ---
-  // The empty [] means: "run this only once, when the screen first appears"
-  useEffect(() => {
-    // We define an async function inside useEffect
-    async function fetchData() {
-      // await pauses here until getRestaurants() finishes (after ~1.5s)
+  // Fetch restaurants
+  const fetchData = async () => {
+    try {
       const data = await getRestaurants();
-      setRestaurants(data);   // Save the data into state
-      setIsLoading(false);    // Tell the UI we're done loading
+      setRestaurants(data);
+    } catch (e) {
+      setError('Could not load restaurants. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    fetchData(); // Call our async function
-  }, []); // Empty array = run only once on mount
+  // Fetch when component first mounts
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handlePress = (restaurantId: string) => {
     router.push(`/restaurant/${restaurantId}`);
+  };
+
+  // Retry button
+  const handleRetry = () => {
+    setError(null);
+    setIsLoading(true);
+    fetchData();
   };
 
   return (
@@ -41,11 +56,37 @@ export default function RestaurantList() {
         <Text style={styles.seeAll}>See all</Text>
       </View>
 
-      {/* Show a spinner while loading, show the list when done */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.light.primary} />
-          <Text style={styles.loadingText}>Finding restaurants near you...</Text>
+          <ActivityIndicator
+            size="large"
+            color={Colors.light.primary}
+          />
+
+          <Text style={styles.loadingText}>
+            Finding restaurants near you...
+          </Text>
+        </View>
+      ) : error ? (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>
+            {error}
+          </Text>
+
+          <TouchableOpacity
+            onPress={handleRetry}
+            style={styles.errorButton}
+          >
+            <Ionicons
+              name="refresh"
+              size={18}
+              color="white"
+            />
+
+            <Text style={styles.errorButtonText}>
+              Try Again
+            </Text>
+          </TouchableOpacity>
         </View>
       ) : (
         restaurants.map((restaurant) => (
@@ -64,6 +105,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -71,24 +113,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
   },
+
   title: {
     fontSize: Typography.sizes.large,
     fontWeight: Typography.weights.bold,
     color: Colors.light.text,
   },
+
   seeAll: {
     fontSize: 14,
     color: Colors.light.primary,
     fontWeight: '600',
   },
+
   loadingContainer: {
     alignItems: 'center',
     paddingVertical: 48,
     gap: 12,
   },
+
   loadingText: {
     fontSize: Typography.sizes.medium,
     color: '#888',
     marginTop: 12,
+  },
+
+  errorButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.light.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    gap: 8,
+    marginTop: 16,
+  },
+
+  errorButtonText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

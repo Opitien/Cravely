@@ -2,11 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, SafeAreaView, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
 import Colors from '../constants/Colors';
 import Typography from '../constants/Typography';
 
 export default function HomeHeader() {
   const router = useRouter();
+  const { user } = useAuth();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -19,8 +21,11 @@ export default function HomeHeader() {
               source={require('../../assets/icon.png')}
               style={styles.brandIcon}
             />
-            <Text style={styles.brandName}>CRAVELY</Text>
+            <Text style={styles.brandName}>Cravely</Text>
           </View>
+          <Text style={styles.greetingText}>
+            Hey, {user?.name ?? 'there'}!
+          </Text>
 
           {/* <TouchableOpacity style={styles.locationRow}>
             <Text style={styles.subtitle}>Delivering to</Text>
@@ -36,9 +41,9 @@ export default function HomeHeader() {
             <View style={styles.badge} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} activeOpacity={0.8}>
+          <TouchableOpacity onPress={() => router.push('/user-profile')} activeOpacity={0.8}>
             <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80' }}
+              source={{ uri: user?.avatar ?? 'https://ui-avatars.com/api/?name=User&background=FF5A5F&color=fff' }}
               style={styles.avatar}
             />
           </TouchableOpacity>
@@ -67,7 +72,6 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
   },
   brandName: {
     fontSize: Typography.sizes.large,
@@ -127,5 +131,12 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 2,
     borderColor: '#F5F5F5',
+  },
+  greetingText: {
+    fontSize: Typography.sizes.medium,
+    fontWeight: Typography.weights.bold,
+    color: Colors.light.text,
+    marginTop: 2,
+    marginLeft: 10,
   },
 });

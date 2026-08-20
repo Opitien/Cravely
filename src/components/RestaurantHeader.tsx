@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from 'react-native';
 import { Restaurant } from '../types';
 import Colors from '../constants/Colors';
 import Typography from '../constants/Typography';
+import { useFavorites } from '../context/FavoritesContext';
+import { Ionicons } from '@expo/vector-icons';
 
 
 
@@ -16,10 +18,22 @@ interface RestaurantHeaderProps {
 // This component displays the restaurant's hero image and key info
 // at the top of the details screen
 export default function RestaurantHeader({ restaurant }: RestaurantHeaderProps) {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorited = isFavorite(restaurant.id);
   return (
     <View style={styles.container}>
       {/* Hero image - full width at the top */}
       <Image source={{ uri: restaurant.image }} style={styles.heroImage} />
+      <TouchableOpacity
+        style={styles.heartButton}
+        onPress={() => toggleFavorite(restaurant.id)}
+      >
+        <Ionicons
+          name={favorited ? "heart" : "heart-outline"}
+          size={22}
+          color={favorited ? Colors.light.primary : 'white'}
+        />
+      </TouchableOpacity>
 
       {/* Restaurant info section below the image */}
       <View style={styles.infoContainer}>
@@ -107,6 +121,17 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
+  },
+  heartButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   menuTitle: {
     fontSize: Typography.sizes.large,

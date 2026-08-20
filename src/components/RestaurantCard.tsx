@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Image, Pressable, TouchableOpacity } from 'react-native';
 import { Restaurant } from '../types';
 import Colors from '../constants/Colors';
 import Typography from '../constants/Typography';
+import { useFavorites } from '../context/FavoritesContext';
+import { Ionicons } from '@expo/vector-icons';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -10,14 +12,23 @@ interface RestaurantCardProps {
 }
 
 export default function RestaurantCard({ restaurant, onPress }: RestaurantCardProps) {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorited = isFavorite(restaurant.id);
+
   return (
     <Pressable onPress={onPress} style={styles.card}>
       <Image source={{ uri: restaurant.image }} style={styles.image} />
 
-      {/* Favorite Button Placeholder */}
-      <View style={styles.heartButton}>
-        <Text style={styles.heartIcon}>🤍</Text>
-      </View>
+      <TouchableOpacity
+        style={styles.heartButton}
+        onPress={() => toggleFavorite(restaurant.id)}
+      >
+        <Ionicons
+          name={favorited ? "heart" : "heart-outline"}
+          size={22}
+          color={favorited ? Colors.light.primary : 'white'}
+        />
+      </TouchableOpacity>
 
       <View style={styles.infoContainer}>
         <View style={styles.headerRow}>

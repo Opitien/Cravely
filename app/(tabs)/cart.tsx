@@ -12,6 +12,7 @@ export default function CartScreen() {
 
   // Calculate delivery fee (Let's make it flat ₦1000 for simplicity if cart isn't empty)
   const deliveryFee = cartTotal > 10000 ? 0 : 1000;
+
   const finalTotal = cartTotal + deliveryFee;
 
   // Empty state view
@@ -43,7 +44,7 @@ export default function CartScreen() {
 
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Delivery Fee</Text>
-        <Text style={styles.summaryValue}>₦{deliveryFee.toLocaleString()}</Text>
+        <Text style={styles.summaryValue}>{deliveryFee === 0 ? 'Free' : `₦${deliveryFee.toLocaleString()}`}</Text>
       </View>
 
       <View style={styles.divider} />
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   clearButtonText: {
-    color: Colors.light.text,
+    color: Colors.light.primary,
     fontSize: Typography.sizes.large,
     fontWeight: Typography.weights.bold,
   },

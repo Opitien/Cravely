@@ -5,6 +5,7 @@ import Colors from '../constants/Colors';
 import Typography from '../constants/Typography';
 import { useCart } from '../context/CartContext';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 interface CartItemCardProps {
   item: CartItem;
@@ -14,33 +15,37 @@ export default function CartItemCard({ item }: CartItemCardProps) {
   const { increaseQuantity, removeFromCart } = useCart();
 
   return (
-    <View style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.image} />
-      
-      <View style={styles.details}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.restaurantName}>{item.restaurantName}</Text>
-        <Text style={styles.price}>₦{(item.price * item.quantity).toLocaleString()}</Text>
-      </View>
 
-      <View style={styles.quantityContainer}>
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => removeFromCart(item.id)}
-        >
-          <Ionicons name="remove" size={18} color={Colors.light.primary} />
-        </TouchableOpacity>
-        
-        <Text style={styles.quantity}>{item.quantity}</Text>
-        
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => increaseQuantity(item.id)}
-        >
-          <Ionicons name="add" size={18} color={Colors.light.primary} />
-        </TouchableOpacity>
-      </View>
-    </View>
+    <TouchableOpacity
+      onPress={() => router.push(`/restaurant/${item.restaurantId}`)} >
+      < View style={styles.card} >
+        <Image source={{ uri: item.image }} style={styles.image} />
+
+        <View style={styles.details}>
+          <Text style={styles.name}>{item.name}</Text>
+          <Text style={styles.restaurantName}>{item.restaurantName}</Text>
+          <Text style={styles.price}>₦{(item.price * item.quantity).toLocaleString()}</Text>
+        </View>
+
+        <View style={styles.quantityContainer}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => removeFromCart(item.id)}
+          >
+            <Ionicons name="remove" size={18} color={Colors.light.primary} />
+          </TouchableOpacity>
+
+          <Text style={styles.quantity}>{item.quantity}</Text>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => increaseQuantity(item.id)}
+          >
+            <Ionicons name="add" size={18} color={Colors.light.primary} />
+          </TouchableOpacity>
+        </View>
+      </View >
+    </TouchableOpacity >
   );
 }
 

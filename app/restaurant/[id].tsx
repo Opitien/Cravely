@@ -1,42 +1,65 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, Button } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { mockRestaurants } from '../../src/utils/mockData';
+import { getRestaurantById } from '../../src/services/api';
+import { Restaurant } from '../../src/types';
 import RestaurantHeader from '../../src/components/RestaurantHeader';
 import MenuItemCard from '../../src/components/MenuItemCard';
 import FloatingCartButton from '../../src/components/FloatingCartButton';
 import Colors from '../../src/constants/Colors';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function RestaurantScreen() {
-  // useLocalSearchParams reads the [id] from the URL
-  // e.g., navigating to /restaurant/3 gives us { id: '3' }
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  // Find the restaurant that matches the id from the URL
-  const restaurant = mockRestaurants.find((r) => r.id === id);
+  // --- State for this screen ---
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // If no restaurant matches, show an error message
-  if (!restaurant) {
+  // --- Fetch the single restaurant by ID when the screen mounts ---
+  useEffect(() => {
+    async function fetchRestaurant() {
+      const data = await getRestaurantById(id);
+      setRestaurant(data);
+      setIsLoading(false);
+    }
+
+    fetchRestaurant();
+  }, [id]); // Re-run if the id ever changes
+
+  // --- Loading state ---
+  if (isLoading) {
     return (
-      <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>Restaurant not found <Text style={styles.notFoundEmoji}>😕</Text> </Text>
-        <Button color={Colors.light.primary} title="Go Back" onPress={() => router.back()} />
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={Colors.light.primary} />
+        <Text style={styles.loadingText}>Loading menu...</Text>
       </View>
     );
   }
 
+  // --- Not found state (like a 404 error) ---
+  if (!restaurant) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.notFoundEmoji}>😕</Text>
+        <Text style={styles.notFoundText}>Restaurant not found</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={16} color="white" />
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // --- Success state: show the restaurant ---
   return (
     <View style={styles.flexContainer}>
       <FlatList
         style={styles.container}
-        // The restaurant's menu items are the main list data
         data={restaurant.menu}
         keyExtractor={(item) => item.id}
-        // ListHeaderComponent renders ABOVE the list items
-        // This is how we put the hero image + info above the menu
         ListHeaderComponent={<RestaurantHeader restaurant={restaurant} />}
-        // Each item in the list renders a MenuItemCard
         renderItem={({ item }) => (
           <MenuItemCard
             item={item}
@@ -59,17 +82,39 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.light.background,
   },
-  notFound: {
+  centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 12,
+    backgroundColor: Colors.light.background,
   },
-  notFoundText: {
-    fontSize: 30,
-    color: '#666',
+  loadingText: {
+    fontSize: 16,
+    color: '#888',
+    marginTop: 12,
   },
   notFoundEmoji: {
-    color: 'red',
-    fontSize: 50,
-  }
+    fontSize: 56,
+  },
+  notFoundText: {
+    fontSize: 18,
+    color: '#666',
+    fontWeight: '600',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.light.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    gap: 6,
+    marginTop: 8,
+  },
+  backButtonText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 15,
+  },
 });

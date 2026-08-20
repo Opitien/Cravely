@@ -1,17 +1,36 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import RestaurantCard from './RestaurantCard';
-import { mockRestaurants } from '../utils/mockData';
+import { Restaurant } from '../types';
+import { getRestaurants } from '../services/api';
 import Typography from '../constants/Typography';
 import Colors from '../constants/Colors';
 
 export default function RestaurantList() {
-  // useRouter gives us the ability to navigate programmatically
   const router = useRouter();
 
+  // --- NEW: State for our fetched data ---
+  // restaurants: starts as an empty array, gets filled when the API responds
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  // isLoading: true while waiting for the API, false when done
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- NEW: useEffect to fetch data when the component first mounts ---
+  // The empty [] means: "run this only once, when the screen first appears"
+  useEffect(() => {
+    // We define an async function inside useEffect
+    async function fetchData() {
+      // await pauses here until getRestaurants() finishes (after ~1.5s)
+      const data = await getRestaurants();
+      setRestaurants(data);   // Save the data into state
+      setIsLoading(false);    // Tell the UI we're done loading
+    }
+
+    fetchData(); // Call our async function
+  }, []); // Empty array = run only once on mount
+
   const handlePress = (restaurantId: string) => {
-    // Navigate to /restaurant/[id] — Expo Router reads the id from the URL
     router.push(`/restaurant/${restaurantId}`);
   };
 
@@ -22,13 +41,21 @@ export default function RestaurantList() {
         <Text style={styles.seeAll}>See all</Text>
       </View>
 
-      {mockRestaurants.map((restaurant) => (
-        <RestaurantCard 
-          key={restaurant.id} 
-          restaurant={restaurant} 
-          onPress={() => handlePress(restaurant.id)} 
-        />
-      ))}
+      {/* Show a spinner while loading, show the list when done */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.light.primary} />
+          <Text style={styles.loadingText}>Finding restaurants near you...</Text>
+        </View>
+      ) : (
+        restaurants.map((restaurant) => (
+          <RestaurantCard
+            key={restaurant.id}
+            restaurant={restaurant}
+            onPress={() => handlePress(restaurant.id)}
+          />
+        ))
+      )}
     </View>
   );
 }
@@ -53,5 +80,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.light.primary,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: 48,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: Typography.sizes.medium,
+    color: '#888',
+    marginTop: 12,
   },
 });

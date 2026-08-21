@@ -1,4 +1,6 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 // The shape of a logged-in user
 export interface User {
@@ -11,7 +13,7 @@ interface AuthContextType {
   user: User | null;          // null means "not logged in"
   login: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,6 +21,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   // user is null when not logged in, and a User object when logged in
   const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem('user');
+
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error('Failed to load user:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   /**
    * Simulated login — in a real app this would call your backend API.
@@ -34,11 +52,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Create a fake user from the email
     const name = email.split('@')[0]; // e.g. "opitien" from "opitien@gmail.com"
-    setUser({
-      name: name.charAt(0).toUpperCase() + name.slice(1), // Capitalize
+    const newUser = {
+      name: name.charAt(0).toUpperCase() + name.slice(1),
       email,
       avatar: `https://ui-avatars.com/api/?name=${name}&background=FF5A5F&color=fff&size=200`,
-    });
+    };
+
+    // Save user to AsyncStorage
+    await AsyncStorage.setItem('user', JSON.stringify(newUser));
+
+    // Update state
+    setUser(newUser);
   };
 
   /**
@@ -54,17 +78,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Password must be at least 6 characters.');
     }
 
-    setUser({
+    const newUser = {
       name,
       email,
       avatar: `https://ui-avatars.com/api/?name=${name}&background=FF5A5F&color=fff&size=200`,
-    });
+    };
+
+    setUser(newUser);
+    await AsyncStorage.setItem('user', JSON.stringify(newUser));
   };
 
   /**
    * Logout clears the user from state, sending them back to the login screen.
    */
-  const logout = () => {
+  const logout = async () => {
+    await AsyncStorage.removeItem('user');
     setUser(null);
   };
 

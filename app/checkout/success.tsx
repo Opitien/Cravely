@@ -3,12 +3,15 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert } from 'r
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../../src/context/CartContext';
+import { useOrders } from '../../src/context/OrdersContext';
 import Colors from '../../src/constants/Colors';
 import Typography from '../../src/constants/Typography';
 
 export default function OrderSuccessScreen() {
   const router = useRouter();
   const { clearCart } = useCart();
+  const { orders } = useOrders();
+  const latestOrder = orders[0];
 
   // Clear the cart as soon as the user lands on the success screen
   useEffect(() => {
@@ -26,9 +29,27 @@ export default function OrderSuccessScreen() {
 
         {/* Success Text */}
         <Text style={styles.title}>Order Placed!</Text>
+        {latestOrder && (
+          <Text style={styles.orderId}>
+            Order #{latestOrder.id} confirmed
+          </Text>
+        )}
         <Text style={styles.subtitle}>
           Your delicious food is being prepared and will be delivered to you shortly.
         </Text>
+
+        {/* Payment Receipt */}
+        {latestOrder && (
+          <View style={styles.receiptBox}>
+            <Text style={styles.receiptLabel}>Amount Paid</Text>
+            <Text style={styles.receiptValue}>₦{latestOrder.total.toLocaleString()}</Text>
+            
+            <Text style={[styles.receiptLabel, { marginTop: 12 }]}>Payment Method</Text>
+            <Text style={styles.receiptValue}>
+              {latestOrder.paymentMethod === 'card' ? 'Credit/Debit Card' : latestOrder.paymentMethod}
+            </Text>
+          </View>
+        )}
 
         {/* Back to Home Button */}
         <TouchableOpacity
@@ -106,5 +127,33 @@ const styles = StyleSheet.create({
     color: Colors.light.primary,
     fontSize: Typography.sizes.medium,
     fontWeight: Typography.weights.bold,
+  },
+  orderId: {
+    fontSize: Typography.sizes.medium,
+    color: Colors.light.primary,
+    fontWeight: Typography.weights.bold,
+    marginBottom: 12,
+  },
+  receiptBox: {
+    width: '100%',
+    backgroundColor: '#F9F9F9',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 40,
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
+  },
+  receiptLabel: {
+    fontSize: Typography.sizes.small,
+    color: '#888',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  receiptValue: {
+    fontSize: Typography.sizes.medium,
+    fontWeight: Typography.weights.bold,
+    color: '#111',
+    textTransform: 'capitalize',
   },
 });

@@ -32,6 +32,14 @@ export default function SignUpScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignUp = async () => {
+    if (!email.trim().includes('@')) {
+      Alert.alert('Please enter a valid email.');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Password must be at least 6 characters.');
+      return;
+    }
     setIsLoading(true);
     try {
       await signUp(name.trim(), email.trim(), password);

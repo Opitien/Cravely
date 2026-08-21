@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../src/context/CartContext';
+import { useOrders } from '../../src/context/OrdersContext';
+import { usePayment } from '../../src/context/PaymentContext';
 import AddressCard from '../../src/components/AddressCard';
 import PaymentMethodCard, { PaymentMethod } from '../../src/components/PaymentMethodCard';
 import Colors from '../../src/constants/Colors';
@@ -9,19 +11,36 @@ import Typography from '../../src/constants/Typography';
 
 export default function CheckoutScreen() {
   const router = useRouter();
-  const { cartTotal, totalItems } = useCart();
+  const { cartTotal, totalItems, items } = useCart();
+  const { placeOrder } = useOrders();
+  const { savedCards, activeCardId } = usePayment();
 
   // Local state for the selected payment method
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+    activeCardId ? 'card' : 'transfer'
+  );
 
   // Same logic as cart screen
   const deliveryFee = cartTotal > 10000 ? 0 : 1000;
   const finalTotal = cartTotal + deliveryFee;
 
   const handlePlaceOrder = () => {
-    // In a real app, you would send the order to your backend here
-    // For now, we'll just navigate to the success screen
-    router.push('/checkout/success');
+    // Grab the restaurant info from the first cart item
+    const firstItem = items[0];
+
+    // Save the order to OrdersContext before clearing the cart
+    placeOrder({
+      restaurantName: firstItem?.restaurantName ?? 'Unknown Restaurant',
+      restaurantImage: 'https://i.pinimg.com/736x/53/e9/0e/53e90e1b5d9fe8b5f4206c87fc56f11b.jpg',
+      items,
+      total: finalTotal,
+      paymentMethod,
+    });
+
+    router.push({
+      pathname: '/checkout/processing',
+      params: { total: finalTotal.toString(), method: paymentMethod }
+    });
   };
 
   // If the user somehow gets here with an empty cart, return them

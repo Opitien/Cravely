@@ -2,12 +2,16 @@ import { Stack } from 'expo-router';
 import { CartProvider } from '../src/context/CartContext';
 import { FavoritesProvider } from '../src/context/FavoritesContext';
 import { AuthProvider } from '../src/context/AuthContext';
+import { OrdersProvider } from '../src/context/OrdersContext';
+import { PaymentProvider } from '../src/context/PaymentContext';
 
 export default function RootLayout() {
   return (
     <AuthProvider>
       <FavoritesProvider>
-        <CartProvider>
+        <OrdersProvider>
+          <PaymentProvider>
+            <CartProvider>
           <Stack>
             {/* Main app tabs */}
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -31,6 +35,10 @@ export default function RootLayout() {
             {/* Checkout flow */}
             <Stack.Screen name="checkout/index" options={{ title: 'Checkout' }} />
             <Stack.Screen
+              name="checkout/processing"
+              options={{ headerShown: false, gestureEnabled: false }}
+            />
+            <Stack.Screen
               name="checkout/success"
               options={{
                 headerShown: false,
@@ -38,9 +46,17 @@ export default function RootLayout() {
               }}
             />
 
+            {/* User profile screens */}
+            <Stack.Screen
+              name="user-profile/cards"
+              options={{ headerShown: false }}
+            />
+
             <Stack.Screen name="+not-found" />
           </Stack>
-        </CartProvider>
+            </CartProvider>
+          </PaymentProvider>
+        </OrdersProvider>
       </FavoritesProvider>
     </AuthProvider>
   );

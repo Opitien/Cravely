@@ -119,7 +119,7 @@ export default function UserProfileScreen() {
         <View style={styles.menuCard}>
           <ProfileMenuItem icon="person-outline" label="Edit Profile" onPress={() => Alert.alert('Coming soon!', 'Edit profile will be available in a future update.')} />
           <ProfileMenuItem icon="location-outline" label="Delivery Address" value="Lagos" onPress={() => Alert.alert('Coming soon!')} />
-          <ProfileMenuItem icon="card-outline" label="Payment Methods" onPress={() => Alert.alert('Coming soon!')} />
+          <ProfileMenuItem icon="card-outline" label="Saved Cards" onPress={() => router.push('/user-profile/cards')} />
         </View>
 
         {/* Preferences Section */}

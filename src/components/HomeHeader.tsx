@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, SafeAreaView, TouchableOpacity, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -140,3 +141,4 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
 });
+

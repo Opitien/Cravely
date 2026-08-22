@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../../src/context/CartContext';
@@ -34,22 +35,31 @@ export default function OrderSuccessScreen() {
             Order #{latestOrder.id} confirmed
           </Text>
         )}
-        <Text style={styles.subtitle}>
-          Your delicious food is being prepared and will be delivered to you shortly.
-        </Text>
+
 
         {/* Payment Receipt */}
         {latestOrder && (
           <View style={styles.receiptBox}>
             <Text style={styles.receiptLabel}>Amount Paid</Text>
-            <Text style={styles.receiptValue}>₦{latestOrder.total.toLocaleString()}</Text>
-            
-            <Text style={[styles.receiptLabel, { marginTop: 12 }]}>Payment Method</Text>
             <Text style={styles.receiptValue}>
-              {latestOrder.paymentMethod === 'card' ? 'Credit/Debit Card' : latestOrder.paymentMethod}
+              ₦{latestOrder.total.toLocaleString()}
+            </Text>
+
+            <Text style={[styles.receiptLabel, { marginTop: 12 }]}>
+              Payment Method
+            </Text>
+            <Text style={styles.receiptValue}>
+              {latestOrder.paymentMethod === 'card'
+                ? 'Credit/Debit Card'
+                : latestOrder.paymentMethod}
             </Text>
           </View>
         )}
+
+        {/* Subtitle */}
+        <Text style={styles.subtitle}>
+          Your delicious food is being prepared and will be delivered to you shortly.
+        </Text>
 
         {/* Back to Home Button */}
         <TouchableOpacity
@@ -61,7 +71,12 @@ export default function OrderSuccessScreen() {
 
         <TouchableOpacity
           style={styles.trackButton}
-          onPress={() => Alert.alert('Track Order', 'Your food will arrive in 20 minutes!')}
+          onPress={() =>
+            Alert.alert(
+              'Track Order',
+              'Your food will arrive in 20 minutes!'
+            )
+          }
         >
           <Text style={styles.trackButtonText}>Track Order</Text>
         </TouchableOpacity>
@@ -157,3 +172,4 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
 });
+

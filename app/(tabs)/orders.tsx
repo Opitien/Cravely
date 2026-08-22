@@ -4,13 +4,11 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  SafeAreaView,
   TouchableOpacity,
-  Platform,
-  StatusBar,
   Image,
   Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOrders, Order, OrderStatus } from '../../src/context/OrdersContext';
@@ -136,7 +134,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F7F7F7',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     backgroundColor: 'white',
@@ -297,3 +294,4 @@ const styles = StyleSheet.create({
     fontWeight: Typography.weights.bold,
   },
 });
+

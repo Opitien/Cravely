@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, Platform, StatusBar, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Platform, StatusBar, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useFavorites } from '../../src/context/FavoritesContext';
 import { getRestaurants } from '../../src/services/api';
@@ -134,3 +135,4 @@ const styles = StyleSheet.create({
     textAlign: "center"
   },
 });
+

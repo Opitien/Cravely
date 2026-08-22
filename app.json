@@ -10,15 +10,23 @@
     "plugins": [
       "expo-router"
     ],
+    "description": "Your cravings, delivered. A fast, modern food delivery experience.",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#131929"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cravely.app"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#131929",
         "foregroundImage": "./assets/icon.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.cravely.app"
     },
     "web": {
       "output": "static",

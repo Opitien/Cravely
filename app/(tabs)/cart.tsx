@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../src/context/CartContext';
 import CartItemCard from '../../src/components/CartItemCard';
@@ -205,3 +206,4 @@ const styles = StyleSheet.create({
     fontWeight: Typography.weights.bold,
   },
 });
+

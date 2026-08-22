@@ -5,8 +5,8 @@ import {
   StyleSheet,
   Animated,
   TouchableOpacity,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../../src/constants/Colors';
@@ -20,22 +20,49 @@ type PaymentState = 'processing' | 'success' | 'failed';
 
 export default function ProcessingScreen() {
   const router = useRouter();
-  // We pass the total through the URL so this screen can display it
-  const { total, method } = useLocalSearchParams<{ total: string; method: string }>();
 
-  const [paymentState, setPaymentState] = useState<PaymentState>('processing');
+  const { total, method } =
+    useLocalSearchParams<{ total: string; method: string }>();
+
+  const [paymentState, setPaymentState] =
+    useState<PaymentState>('processing');
 
   // Animated value for the pulsing ring
   const pulse = useRef(new Animated.Value(1)).current;
+
   // Animated value for the icon fade-in
   const iconOpacity = useRef(new Animated.Value(0)).current;
+
+  // Animated value for the spinning card icon
+  const spinValue = useRef(new Animated.Value(0)).current;
+
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const spinAnimation = Animated.loop(
+    Animated.timing(spinValue, {
+      toValue: 1,
+      duration: 2000,
+      useNativeDriver: true,
+    })
+  );
 
   // Start the pulsing animation loop
   const startPulse = () => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.18, duration: 700, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulse, {
+          toValue: 1.18,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
       ])
     ).start();
   };
@@ -51,18 +78,27 @@ export default function ProcessingScreen() {
 
   const processPayment = () => {
     setPaymentState('processing');
+
     pulse.setValue(1);
     iconOpacity.setValue(0);
+
     startPulse();
 
+    // Start spinning the card icon
+    spinValue.setValue(0);
+    spinAnimation.start();
+
     setTimeout(() => {
-      // Stop the pulse animation
+      // Stop both animations when processing finishes
       pulse.stopAnimation();
+      spinAnimation.stop();
 
       const succeeded = Math.random() < SUCCESS_RATE;
+
       if (succeeded) {
         setPaymentState('success');
         fadeInIcon();
+
         // After showing success for 1.2s, navigate to the success screen
         setTimeout(() => {
           router.replace('/checkout/success');
@@ -86,8 +122,8 @@ export default function ProcessingScreen() {
   const ringColor = isProcessing
     ? Colors.light.primary
     : isSuccess
-    ? '#22C55E'
-    : '#EF4444';
+      ? '#22C55E'
+      : '#EF4444';
 
   const iconName = isSuccess ? 'checkmark' : 'close';
   const iconColor = isSuccess ? '#22C55E' : '#EF4444';
@@ -98,58 +134,107 @@ export default function ProcessingScreen() {
 
         {/* Amount */}
         <Text style={styles.amountLabel}>Amount</Text>
-        <Text style={styles.amount}>₦{Number(total).toLocaleString()}</Text>
+        <Text style={styles.amount}>
+          ₦{Number(total).toLocaleString()}
+        </Text>
         <Text style={styles.method}>{method ?? 'card'}</Text>
 
         {/* Animated ring + icon */}
         <View style={styles.circleWrapper}>
-          {/* Outer pulsing ring — only animates during processing */}
+
+          {/* Outer pulsing ring */}
           <Animated.View
             style={[
               styles.pulseRing,
               { borderColor: ringColor + '40' },
-              isProcessing ? { transform: [{ scale: pulse }] } : {},
+              isProcessing
+                ? { transform: [{ scale: pulse }] }
+                : {},
             ]}
           />
 
           {/* Inner circle */}
-          <View style={[styles.innerCircle, { borderColor: ringColor }]}>
+          <View
+            style={[
+              styles.innerCircle,
+              { borderColor: ringColor },
+            ]}
+          >
             {isProcessing ? (
-              // Spinner dots (simulated with rotating icon)
-              <Animated.View style={{ transform: [{ scale: pulse }] }}>
-                <Ionicons name="card-outline" size={52} color={Colors.light.primary} />
+              // Spinning + pulsing card icon
+              <Animated.View
+                style={{
+                  transform: [
+                    { scale: pulse },
+                    { rotate: spin },
+                  ],
+                }}
+              >
+                <Ionicons
+                  name="card-outline"
+                  size={52}
+                  color={Colors.light.primary}
+                />
               </Animated.View>
             ) : (
               <Animated.View style={{ opacity: iconOpacity }}>
-                <Ionicons name={iconName} size={56} color={iconColor} />
+                <Ionicons
+                  name={iconName}
+                  size={56}
+                  color={iconColor}
+                />
               </Animated.View>
             )}
           </View>
         </View>
 
         {/* Status text */}
-        <Text style={[styles.statusTitle, !isProcessing && { color: iconColor }]}>
-          {isProcessing ? 'Processing Payment…' : isSuccess ? 'Payment Successful!' : 'Payment Failed'}
+        <Text
+          style={[
+            styles.statusTitle,
+            !isProcessing && { color: iconColor },
+          ]}
+        >
+          {isProcessing
+            ? 'Processing Payment…'
+            : isSuccess
+              ? 'Payment Successful!'
+              : 'Payment Failed'}
         </Text>
+
         <Text style={styles.statusSub}>
           {isProcessing
             ? 'Please wait while we confirm your payment'
             : isSuccess
-            ? 'Redirecting to your order…'
-            : 'Your payment could not be processed. Please try again.'}
+              ? 'Redirecting to your order…'
+              : 'Your payment could not be processed. Please try again.'}
         </Text>
 
-        {/* Retry button — only shown on failure */}
+        {/* Retry button */}
         {paymentState === 'failed' && (
-          <TouchableOpacity style={styles.retryButton} onPress={processPayment}>
-            <Ionicons name="refresh" size={18} color="white" style={{ marginRight: 8 }} />
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={processPayment}
+          >
+            <Ionicons
+              name="refresh"
+              size={18}
+              color="white"
+              style={{ marginRight: 8 }}
+            />
             <Text style={styles.retryText}>Try Again</Text>
           </TouchableOpacity>
         )}
 
+        {/* Cancel button */}
         {paymentState === 'failed' && (
-          <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
-            <Text style={styles.cancelText}>Go Back to Checkout</Text>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.cancelText}>
+              Go Back to Checkout
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -188,7 +273,6 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
 
-  // Animated ring
   circleWrapper: {
     width: 160,
     height: 160,

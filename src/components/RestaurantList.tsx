@@ -14,7 +14,11 @@ import { getRestaurants } from '../services/api';
 import Typography from '../constants/Typography';
 import Colors from '../constants/Colors';
 
-export default function RestaurantList() {
+interface RestaurantListProps {
+  onRefreshReady?: (reloadFn: () => void) => void;
+}
+
+export default function RestaurantList({ onRefreshReady }: RestaurantListProps) {
   const router = useRouter();
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -36,6 +40,10 @@ export default function RestaurantList() {
   // Fetch when component first mounts
   useEffect(() => {
     fetchData();
+    // Expose the retry/reload function to the parent component
+    if (onRefreshReady) {
+      onRefreshReady(handleRetry);
+    }
   }, []);
 
   const handlePress = (restaurantId: string) => {

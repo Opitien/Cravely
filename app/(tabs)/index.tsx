@@ -13,6 +13,12 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [reloadRestaurants, setReloadRestaurants] = useState<(() => void) | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const handleScroll = (event: any) => {
+    const scrollY = event.nativeEvent.contentOffset.y;
+    setIsScrolled(scrollY > 0);
+  };
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -32,10 +38,13 @@ export default function HomeScreen() {
   }
   return (
 
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: Colors.light.background }}>
+      <HomeHeader isScrolled={isScrolled} />
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -45,7 +54,6 @@ export default function HomeScreen() {
           />
         }
       >
-        <HomeHeader />
         <SearchBar />
         <CategoryList />
         <RestaurantList onRefreshReady={setReloadRestaurants} />

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useCart } from '../context/CartContext';
 import Colors from '../constants/Colors';
 import Typography from '../constants/Typography';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function FloatingCartButton() {
   const { totalItems, cartTotal, clearCart } = useCart();
@@ -21,15 +22,15 @@ export default function FloatingCartButton() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={handlePress}>
+      <TouchableOpacity style={styles.button} onPress={handlePress} activeOpacity={0.9}>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{totalItems}</Text>
         </View>
 
         <Text style={styles.buttonText}>View Cart</Text>
 
-        <TouchableOpacity onPress={clearCart}>
-          <Text style={styles.buttonText}>Clear Cart</Text>
+        <TouchableOpacity onPress={clearCart} style={styles.clearButton}>
+          <Ionicons name="trash-outline" size={18} color="white" />
         </TouchableOpacity>
 
         <Text style={styles.priceText}>₦{cartTotal.toLocaleString()}</Text>
@@ -47,16 +48,17 @@ const styles = StyleSheet.create({
     zIndex: 100, // Make sure it stays on top of lists
   },
   button: {
-    backgroundColor: '#FF0000',
+    backgroundColor: Colors.light.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderRadius: 32, // Pill shape
+    shadowColor: Colors.light.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
     elevation: 8,
   },
   badge: {
@@ -76,6 +78,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: Typography.sizes.medium,
     fontWeight: Typography.weights.bold,
+    flex: 1,
+    textAlign: 'center',
+  },
+  clearButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+    marginRight: 12,
   },
   priceText: {
     color: 'white',

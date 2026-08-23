@@ -34,7 +34,7 @@ export default function RestaurantCard({ restaurant, onPress }: RestaurantCardPr
         <View style={styles.headerRow}>
           <Text style={styles.name}>{restaurant.name}</Text>
           <View style={styles.ratingContainer}>
-            <Text style={styles.star}>⭐</Text>
+            <Ionicons name="star" size={14} color="#FFD700" style={styles.star} />
             <Text style={styles.rating}>{restaurant.rating}</Text>
           </View>
         </View>
@@ -42,14 +42,19 @@ export default function RestaurantCard({ restaurant, onPress }: RestaurantCardPr
         <Text style={styles.category}>{restaurant.category}</Text>
 
         <View style={styles.footerRow}>
-          <Text style={styles.footerText}>🕒 {restaurant.deliveryTime}</Text>
-          <Text style={styles.footerText}> • </Text>
-          <Text style={styles.footerText}>🚚 ₦{restaurant.deliveryFee}</Text>
+          <Ionicons name="time-outline" size={14} color="#888" style={{ marginRight: 4 }} />
+          <Text style={styles.footerText}>{restaurant.deliveryTime}</Text>
+          <Text style={styles.footerText}>  •  </Text>
+          <Ionicons name="bicycle-outline" size={16} color="#888" style={{ marginRight: 4 }} />
+          <Text style={styles.footerText}>₦{restaurant.deliveryFee}</Text>
         </View>
         {restaurant.deliveryFee === 0 && (
-          <Text style={{ color: 'green', fontWeight: 'bold', marginTop: 4 }}>
-            🎉 Free Delivery
-          </Text>
+          <View style={styles.freeDeliveryBadge}>
+            <Ionicons name="sparkles" size={12} color="#22C55E" style={{ marginRight: 4 }} />
+            <Text style={{ color: '#22C55E', fontWeight: 'bold', fontSize: 12 }}>
+              Free Delivery
+            </Text>
+          </View>
         )}
 
       </View>
@@ -59,21 +64,23 @@ export default function RestaurantCard({ restaurant, onPress }: RestaurantCardPr
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.light.background,
-    borderRadius: 16,
-    marginBottom: 20,
-    marginHorizontal: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    marginBottom: 24,
+    marginHorizontal: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3, // For Android shadow
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 5,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
   image: {
     width: '100%',
-    height: 180,
-    backgroundColor: '#eee', // Placeholder color before image loads
+    height: 200,
+    backgroundColor: '#eee',
   },
   heartButton: {
     position: 'absolute',
@@ -90,7 +97,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   infoContainer: {
-    padding: 16,
+    padding: 20,
   },
   headerRow: {
     flexDirection: 'row',
@@ -112,7 +119,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   star: {
-    fontSize: 12,
     marginRight: 4,
   },
   rating: {
@@ -131,5 +137,16 @@ const styles = StyleSheet.create({
   footerText: {
     color: '#888',
     fontSize: 13,
+    fontWeight: '500',
+  },
+  freeDeliveryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginTop: 12,
   },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,12 +7,18 @@ import { useAuth } from '../context/AuthContext';
 import Colors from '../constants/Colors';
 import Typography from '../constants/Typography';
 
-export default function HomeHeader() {
+export default function HomeHeader({ isScrolled = false }: { isScrolled?: boolean }) {
   const router = useRouter();
   const { user } = useAuth();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView 
+      style={[
+        styles.safeArea, 
+        isScrolled && styles.safeAreaScrolled
+      ]} 
+      edges={['top']}
+    >
       <View style={styles.container}>
 
         {/* Left side: Brand and Location */}
@@ -57,15 +63,20 @@ export default function HomeHeader() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: Colors.light.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: '#ffffff',
+    zIndex: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'transparent', // Flat by default
+  },
+  safeAreaScrolled: {
+    borderBottomColor: '#EAEAEA', // Crisp line when scrolled
   },
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
   },
   textContainer: {
     flex: 1,

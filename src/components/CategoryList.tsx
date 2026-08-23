@@ -31,6 +31,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   listContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10, // give room for shadows
   },
 });

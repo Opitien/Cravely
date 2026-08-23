@@ -40,9 +40,16 @@ const styles = StyleSheet.create({
   },
   selectedContainer: {
     backgroundColor: Colors.light.primary,
+    shadowColor: Colors.light.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   unselectedContainer: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
   },
   icon: {
     fontSize: 16,

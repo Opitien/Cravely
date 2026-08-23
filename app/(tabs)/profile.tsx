@@ -85,9 +85,15 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
-    padding: 16,
-    paddingTop: 24,
-    backgroundColor: Colors.light.background,
+    padding: 20,
+    paddingTop: 20,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
+    zIndex: 10,
   },
   title: {
     fontSize: Typography.sizes.xlarge,
@@ -100,8 +106,8 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   listContent: {
-    paddingTop: 8,
-    paddingBottom: 24,
+    paddingTop: 24,
+    paddingBottom: 40,
   },
   emptyContainer: {
     flex: 1,

@@ -4,36 +4,39 @@ import { useRouter } from 'expo-router';
 import { useCart } from '../context/CartContext';
 import Colors from '../constants/Colors';
 import Typography from '../constants/Typography';
-import { Ionicons } from '@expo/vector-icons';
+import { formatNaira } from '../lib/format';
 
 export default function FloatingCartButton() {
-  const { totalItems, cartTotal, clearCart } = useCart();
+  const { totalItems, subtotal, restaurant } = useCart();
   const router = useRouter();
 
-  // If the cart is empty, don't show the button at all
   if (totalItems === 0) {
     return null;
   }
 
-  const handlePress = () => {
-    // Navigate to the cart tab
-    router.push('/(tabs)/cart');
-  };
-
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={handlePress} activeOpacity={0.9}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => router.push('/cart')}
+        activeOpacity={0.9}
+        accessibilityRole="button"
+        accessibilityLabel={`View cart, ${totalItems} items, ${formatNaira(subtotal)}`}
+      >
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{totalItems}</Text>
         </View>
 
-        <Text style={styles.buttonText}>View Cart</Text>
+        <View style={styles.textContainer}>
+          <Text style={styles.buttonText}>View Cart</Text>
+          {restaurant && (
+            <Text style={styles.restaurantText} numberOfLines={1}>
+              {restaurant.name}
+            </Text>
+          )}
+        </View>
 
-        <TouchableOpacity onPress={clearCart} style={styles.clearButton}>
-          <Ionicons name="trash-outline" size={18} color="white" />
-        </TouchableOpacity>
-
-        <Text style={styles.priceText}>₦{cartTotal.toLocaleString()}</Text>
+        <Text style={styles.priceText}>{formatNaira(subtotal)}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -42,10 +45,10 @@ export default function FloatingCartButton() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 24, // Floats above the bottom of the screen
+    bottom: 24,
     left: 16,
     right: 16,
-    zIndex: 100, // Make sure it stays on top of lists
+    zIndex: 100,
   },
   button: {
     backgroundColor: Colors.light.primary,
@@ -53,8 +56,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 18,
-    borderRadius: 32, // Pill shape
+    paddingVertical: 14,
+    borderRadius: 32,
     shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
@@ -74,18 +77,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
+  textContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 12,
+  },
   buttonText: {
     color: 'white',
     fontSize: Typography.sizes.medium,
     fontWeight: Typography.weights.bold,
-    flex: 1,
-    textAlign: 'center',
   },
-  clearButton: {
-    padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    marginRight: 12,
+  restaurantText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 12,
+    marginTop: 1,
   },
   priceText: {
     color: 'white',

@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, Image, Pressable, TouchableOpacity } from 'reac
 import { Restaurant } from '../types';
 import Colors from '../constants/Colors';
 import Typography from '../constants/Typography';
-import { useFavorites } from '../context/FavoritesContext';
+import { useFavorites } from '../hooks/queries';
+import { formatDeliveryTime, formatNaira } from '../lib/format';
 import { Ionicons } from '@expo/vector-icons';
 
 interface RestaurantCardProps {
@@ -16,15 +17,25 @@ export default function RestaurantCard({ restaurant, onPress }: RestaurantCardPr
   const favorited = isFavorite(restaurant.id);
 
   return (
-    <Pressable onPress={onPress} style={styles.card}>
-      <Image source={{ uri: restaurant.image }} style={styles.image} />
+    <Pressable onPress={onPress} style={styles.card} accessibilityRole="button" accessibilityLabel={restaurant.name}>
+      <Image
+        source={{ uri: restaurant.imageUrl }}
+        style={[styles.image, !restaurant.isOpen && styles.imageClosed]}
+      />
+
+      {!restaurant.isOpen && (
+        <View style={styles.closedBadge}>
+          <Text style={styles.closedText}>Closed</Text>
+        </View>
+      )}
 
       <TouchableOpacity
         style={styles.heartButton}
         onPress={() => toggleFavorite(restaurant.id)}
+        accessibilityLabel={favorited ? 'Remove from favourites' : 'Add to favourites'}
       >
         <Ionicons
-          name={favorited ? "heart" : "heart-outline"}
+          name={favorited ? 'heart' : 'heart-outline'}
           size={22}
           color={favorited ? Colors.light.primary : 'white'}
         />
@@ -32,21 +43,25 @@ export default function RestaurantCard({ restaurant, onPress }: RestaurantCardPr
 
       <View style={styles.infoContainer}>
         <View style={styles.headerRow}>
-          <Text style={styles.name}>{restaurant.name}</Text>
+          <Text style={styles.name} numberOfLines={1}>{restaurant.name}</Text>
           <View style={styles.ratingContainer}>
             <Ionicons name="star" size={14} color="#FFD700" style={styles.star} />
-            <Text style={styles.rating}>{restaurant.rating}</Text>
+            <Text style={styles.rating}>{restaurant.rating.toFixed(1)}</Text>
           </View>
         </View>
 
-        <Text style={styles.category}>{restaurant.category}</Text>
+        <Text style={styles.category}>{restaurant.cuisine}</Text>
 
         <View style={styles.footerRow}>
           <Ionicons name="time-outline" size={14} color="#888" style={{ marginRight: 4 }} />
-          <Text style={styles.footerText}>{restaurant.deliveryTime}</Text>
+          <Text style={styles.footerText}>
+            {formatDeliveryTime(restaurant.deliveryMinMinutes, restaurant.deliveryMaxMinutes)}
+          </Text>
           <Text style={styles.footerText}>  •  </Text>
           <Ionicons name="bicycle-outline" size={16} color="#888" style={{ marginRight: 4 }} />
-          <Text style={styles.footerText}>₦{restaurant.deliveryFee}</Text>
+          <Text style={styles.footerText}>
+            {restaurant.deliveryFee === 0 ? 'Free' : formatNaira(restaurant.deliveryFee)}
+          </Text>
         </View>
         {restaurant.deliveryFee === 0 && (
           <View style={styles.freeDeliveryBadge}>
@@ -56,7 +71,6 @@ export default function RestaurantCard({ restaurant, onPress }: RestaurantCardPr
             </Text>
           </View>
         )}
-
       </View>
     </Pressable>
   );
@@ -82,6 +96,23 @@ const styles = StyleSheet.create({
     height: 200,
     backgroundColor: '#eee',
   },
+  imageClosed: {
+    opacity: 0.5,
+  },
+  closedBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  closedText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 12,
+  },
   heartButton: {
     position: 'absolute',
     top: 12,
@@ -93,9 +124,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heartIcon: {
-    fontSize: 16,
-  },
   infoContainer: {
     padding: 20,
   },
@@ -106,6 +134,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   name: {
+    flex: 1,
+    marginRight: 8,
     fontSize: Typography.sizes.medium,
     fontWeight: Typography.weights.bold,
     color: Colors.light.text,

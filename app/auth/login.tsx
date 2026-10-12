@@ -18,12 +18,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import Colors from '../../src/constants/Colors';
 import Typography from '../../src/constants/Typography';
+import { getErrorMessage } from '../../src/lib/format';
+import { EMAIL_PATTERN } from '../../src/lib/validation';
 
 const { height } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { signIn } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,20 +33,28 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email.trim().includes('@')) {
+    if (!EMAIL_PATTERN.test(email.trim())) {
       Alert.alert('Please enter a valid email.');
       return;
     }
-    if (password.length < 6) {
-      Alert.alert('Password must be at least 6 characters.');
+    if (!password) {
+      Alert.alert('Please enter your password.');
       return;
     }
     setIsLoading(true);
     try {
-      await login(email.trim(), password);
-      router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert('Login Failed', error.message);
+      // On success the auth guard in app/_layout.tsx switches to the signed-in screens.
+      await signIn(email, password);
+    } catch (error) {
+      const message = getErrorMessage(error);
+      Alert.alert(
+        'Sign in failed',
+        /email not confirmed/i.test(message)
+          ? 'Please confirm your email address using the link we sent you, then sign in.'
+          : /invalid login credentials/i.test(message)
+            ? 'Incorrect email or password.'
+            : message
+      );
     } finally {
       setIsLoading(false);
     }
@@ -82,6 +92,8 @@ export default function LoginScreen() {
               placeholderTextColor="#bbb"
               keyboardType="email-address"
               autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
               value={email}
               onChangeText={setEmail}
             />
@@ -95,8 +107,11 @@ export default function LoginScreen() {
               placeholder="Password"
               placeholderTextColor="#bbb"
               secureTextEntry={!showPassword}
+              autoComplete="current-password"
+              textContentType="password"
               value={password}
               onChangeText={setPassword}
+              onSubmitEditing={handleLogin}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons
@@ -106,6 +121,10 @@ export default function LoginScreen() {
               />
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity style={styles.forgotRow} onPress={() => router.push('/auth/forgot-password')}>
+            <Text style={styles.link}>Forgot password?</Text>
+          </TouchableOpacity>
 
           {/* Sign In Button */}
           <TouchableOpacity
@@ -137,6 +156,11 @@ export default function LoginScreen() {
 const HERO_HEIGHT = height * 0.42;
 
 const styles = StyleSheet.create({
+  forgotRow: {
+    alignSelf: 'flex-end',
+    marginTop: -4,
+    marginBottom: 12,
+  },
   root: {
     flex: 1,
     backgroundColor: Colors.light.primary, // dark navy — matches app icon background

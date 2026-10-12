@@ -18,6 +18,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import Colors from '../../src/constants/Colors';
 import Typography from '../../src/constants/Typography';
+import { getErrorMessage } from '../../src/lib/format';
+import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH } from '../../src/lib/validation';
 
 const { height } = Dimensions.get('window');
 
@@ -32,20 +34,31 @@ export default function SignUpScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignUp = async () => {
-    if (!email.trim().includes('@')) {
+    if (name.trim().length < 2) {
+      Alert.alert('Please enter your full name.');
+      return;
+    }
+    if (!EMAIL_PATTERN.test(email.trim())) {
       Alert.alert('Please enter a valid email.');
       return;
     }
-    if (password.length < 6) {
-      Alert.alert('Password must be at least 6 characters.');
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      Alert.alert(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
     setIsLoading(true);
     try {
-      await signUp(name.trim(), email.trim(), password);
-      router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert('Sign Up Failed', error.message);
+      const { needsConfirmation } = await signUp(name, email, password);
+      if (needsConfirmation) {
+        Alert.alert(
+          'Check your email',
+          `We sent a confirmation link to ${email.trim()}. Open it on this phone to finish creating your account.`,
+          [{ text: 'OK', onPress: () => router.replace('/auth/login') }]
+        );
+      }
+      // Otherwise we're signed in and the auth guard moves us into the app.
+    } catch (error) {
+      Alert.alert('Sign up failed', getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -84,6 +97,8 @@ export default function SignUpScreen() {
               placeholder="Full name"
               placeholderTextColor="#bbb"
               autoCapitalize="words"
+              autoComplete="name"
+              textContentType="name"
               value={name}
               onChangeText={setName}
             />
@@ -98,6 +113,8 @@ export default function SignUpScreen() {
               placeholderTextColor="#bbb"
               keyboardType="email-address"
               autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
               value={email}
               onChangeText={setEmail}
             />
@@ -108,9 +125,11 @@ export default function SignUpScreen() {
             <Ionicons name="lock-closed-outline" size={20} color="#999" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Password (min. 6 characters)"
+              placeholder={`Password (min. ${MIN_PASSWORD_LENGTH} characters)`}
               placeholderTextColor="#bbb"
               secureTextEntry={!showPassword}
+              autoComplete="new-password"
+              textContentType="newPassword"
               value={password}
               onChangeText={setPassword}
             />
@@ -139,7 +158,7 @@ export default function SignUpScreen() {
           {/* Login link */}
           <TouchableOpacity
             style={styles.linkRow}
-            onPress={() => router.push('/auth/login')}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/auth/login'))}
           >
             <Text style={styles.linkText}>Already have an account? </Text>
             <Text style={styles.link}>Sign In</Text>

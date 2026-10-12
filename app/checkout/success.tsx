@@ -1,86 +1,55 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useCart } from '../../src/context/CartContext';
-import { useOrders } from '../../src/context/OrdersContext';
+import { useOrder } from '../../src/hooks/queries';
+import { PAYMENT_METHOD_DETAILS } from '../../src/components/PaymentMethodCard';
 import Colors from '../../src/constants/Colors';
 import Typography from '../../src/constants/Typography';
+import { formatNaira } from '../../src/lib/format';
 
 export default function OrderSuccessScreen() {
   const router = useRouter();
-  const { clearCart } = useCart();
-  const { orders } = useOrders();
-  const latestOrder = orders[0];
-
-  // Clear the cart as soon as the user lands on the success screen
-  useEffect(() => {
-    clearCart();
-  }, []);
+  const { orderId } = useLocalSearchParams<{ orderId: string }>();
+  const { data: order } = useOrder(orderId);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-
-        {/* Celebration Icon */}
         <View style={styles.iconCircle}>
           <Ionicons name="checkmark-circle" size={100} color={Colors.light.primary} />
         </View>
 
-        {/* Success Text */}
         <Text style={styles.title}>Order Placed!</Text>
-        {latestOrder && (
-          <Text style={styles.orderId}>
-            Order #{latestOrder.id} confirmed
-          </Text>
-        )}
+        {order && <Text style={styles.orderId}>Order {order.orderNumber} confirmed</Text>}
 
-
-        {/* Payment Receipt */}
-        {latestOrder && (
+        {order && (
           <View style={styles.receiptBox}>
-            <Text style={styles.receiptLabel}>Amount Paid</Text>
-            <Text style={styles.receiptValue}>
-              ₦{latestOrder.total.toLocaleString()}
-            </Text>
+            <Text style={styles.receiptLabel}>{order.paymentStatus === 'paid' ? 'Amount Paid' : 'Amount Due'}</Text>
+            <Text style={styles.receiptValue}>{formatNaira(order.total)}</Text>
 
-            <Text style={[styles.receiptLabel, { marginTop: 12 }]}>
-              Payment Method
-            </Text>
-            <Text style={styles.receiptValue}>
-              {latestOrder.paymentMethod === 'card'
-                ? 'Credit/Debit Card'
-                : latestOrder.paymentMethod}
-            </Text>
+            <Text style={[styles.receiptLabel, { marginTop: 12 }]}>Payment Method</Text>
+            <Text style={styles.receiptValue}>{PAYMENT_METHOD_DETAILS[order.paymentMethod].title}</Text>
+
+            <Text style={[styles.receiptLabel, { marginTop: 12 }]}>From</Text>
+            <Text style={styles.receiptValue}>{order.restaurantName}</Text>
           </View>
         )}
 
-        {/* Subtitle */}
         <Text style={styles.subtitle}>
-          Your delicious food is being prepared and will be delivered to you shortly.
+          {order?.paymentMethod === 'cash'
+            ? 'Please have the exact amount ready when your rider arrives.'
+            : 'The restaurant has received your order and will start preparing it shortly.'}
         </Text>
 
-        {/* Back to Home Button */}
-        <TouchableOpacity
-          style={styles.homeButton}
-          onPress={() => router.push('/(tabs)')}
-        >
-          <Text style={styles.homeButtonText}>Back to Home</Text>
+        <TouchableOpacity style={styles.homeButton} onPress={() => router.replace(`/orders/${orderId}`)}>
+          <Text style={styles.homeButtonText}>Track Order</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.trackButton}
-          onPress={() =>
-            Alert.alert(
-              'Track Order',
-              'Your food will arrive in 20 minutes!'
-            )
-          }
-        >
-          <Text style={styles.trackButtonText}>Track Order</Text>
+        <TouchableOpacity style={styles.trackButton} onPress={() => router.dismissTo('/')}>
+          <Text style={styles.trackButtonText}>Back to Home</Text>
         </TouchableOpacity>
-
       </View>
     </SafeAreaView>
   );
@@ -99,7 +68,6 @@ const styles = StyleSheet.create({
   },
   iconCircle: {
     marginBottom: 24,
-    // Add a subtle glow behind the checkmark
     shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
@@ -154,7 +122,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9F9F9',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 40,
+    marginBottom: 32,
     borderWidth: 1,
     borderColor: '#EFEFEF',
   },
@@ -169,7 +137,5 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.medium,
     fontWeight: Typography.weights.bold,
     color: '#111',
-    textTransform: 'capitalize',
   },
 });
-

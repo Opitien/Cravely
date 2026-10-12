@@ -1,107 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import RestaurantCard from './RestaurantCard';
+import { EmptyState, ErrorState, LoadingState } from './ScreenState';
 import { Restaurant } from '../types';
-import { getRestaurants } from '../services/api';
 import Typography from '../constants/Typography';
 import Colors from '../constants/Colors';
 
 interface RestaurantListProps {
-  onRefreshReady?: (reloadFn: () => void) => void;
+  title: string;
+  restaurants: Restaurant[] | undefined;
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
 }
 
-export default function RestaurantList({ onRefreshReady }: RestaurantListProps) {
+export default function RestaurantList({ title, restaurants, isLoading, error, onRetry }: RestaurantListProps) {
   const router = useRouter();
-
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch restaurants
-  const fetchData = async () => {
-    try {
-      const data = await getRestaurants();
-      setRestaurants(data);
-    } catch (e) {
-      setError('Could not load restaurants. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch when component first mounts
-  useEffect(() => {
-    fetchData();
-    // Expose the retry/reload function to the parent component
-    if (onRefreshReady) {
-      onRefreshReady(handleRetry);
-    }
-  }, []);
-
-  const handlePress = (restaurantId: string) => {
-    router.push(`/restaurant/${restaurantId}`);
-  };
-
-  // Retry button
-  const handleRetry = () => {
-    setError(null);
-    setIsLoading(true);
-    fetchData();
-  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Popular near you</Text>
-        <Text style={styles.seeAll}>See all</Text>
+        <Text style={styles.title}>{title}</Text>
+        {restaurants && restaurants.length > 0 && (
+          <Text style={styles.count}>{restaurants.length} places</Text>
+        )}
       </View>
 
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator
-            size="large"
-            color={Colors.light.primary}
-          />
-
-          <Text style={styles.loadingText}>
-            Finding restaurants near you...
-          </Text>
-        </View>
-      ) : error ? (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>
-            {error}
-          </Text>
-
-          <TouchableOpacity
-            onPress={handleRetry}
-            style={styles.errorButton}
-          >
-            <Ionicons
-              name="refresh"
-              size={18}
-              color="white"
-            />
-
-            <Text style={styles.errorButtonText}>
-              Try Again
-            </Text>
-          </TouchableOpacity>
-        </View>
+      {isLoading && !restaurants ? (
+        <LoadingState message="Finding restaurants near you..." />
+      ) : error && !restaurants ? (
+        <ErrorState message={error} onRetry={onRetry} />
+      ) : !restaurants || restaurants.length === 0 ? (
+        <EmptyState emoji="🔍" title="No restaurants found" subtitle="Try a different search or category." />
       ) : (
+        // Rendered with map (not FlatList) because this list sits inside the Home ScrollView.
         restaurants.map((restaurant) => (
           <RestaurantCard
             key={restaurant.id}
             restaurant={restaurant}
-            onPress={() => handlePress(restaurant.id)}
+            onPress={() => router.push(`/restaurant/${restaurant.id}`)}
           />
         ))
       )}
@@ -112,55 +50,23 @@ export default function RestaurantList({ onRefreshReady }: RestaurantListProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingBottom: 96, // room for the floating cart button
   },
-
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     marginBottom: 16,
   },
-
   title: {
     fontSize: Typography.sizes.large,
     fontWeight: Typography.weights.bold,
     color: Colors.light.text,
   },
-
-  seeAll: {
+  count: {
     fontSize: 14,
-    color: Colors.light.primary,
+    color: Colors.light.textMuted,
     fontWeight: '600',
-  },
-
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 48,
-    gap: 12,
-  },
-
-  loadingText: {
-    fontSize: Typography.sizes.medium,
-    color: '#888',
-    marginTop: 12,
-  },
-
-  errorButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.light.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
-    gap: 8,
-    marginTop: 16,
-  },
-
-  errorButtonText: {
-    color: 'white',
-    fontSize: 15,
-    fontWeight: '700',
   },
 });

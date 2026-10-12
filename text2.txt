@@ -1,0 +1,12 @@
+Choices I made that you may want to change:
+
+The link scheme is now cravely://.
+Minimum password length is 8.
+iPad support is turned off, so you don't need iPad screenshots for the App Store.
+Users must log in before browsing. That's how the app already worked.
+Still missing:
+
+Restaurant dashboard: order status (preparing, on the way, delivered) is changed by hand in the Supabase table editor for now.
+Refunds: cancelling a paid order flags it, but you issue the refund yourself from the Paystack dashboard.
+Not built yet: push notifications, map/GPS addresses and delivery zones, and automated tests in the repo.
+Your own links: replace the placeholder privacy, terms and support email in Links.ts before submitting to the stores.

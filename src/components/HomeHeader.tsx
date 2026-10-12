@@ -2,60 +2,47 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../hooks/queries';
 import Colors from '../constants/Colors';
 import Typography from '../constants/Typography';
 
+export function avatarUrlFor(name: string | undefined, avatarUrl?: string | null) {
+  if (avatarUrl) return avatarUrl;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=FF5A5F&color=fff&size=200`;
+}
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export default function HomeHeader({ isScrolled = false }: { isScrolled?: boolean }) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: profile } = useProfile();
+  const firstName = profile?.fullName.split(' ')[0];
 
   return (
-    <SafeAreaView 
-      style={[
-        styles.safeArea, 
-        isScrolled && styles.safeAreaScrolled
-      ]} 
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.safeArea, isScrolled && styles.safeAreaScrolled]} edges={['top']}>
       <View style={styles.container}>
-
-        {/* Left side: Brand and Location */}
         <View style={styles.textContainer}>
           <View style={styles.brandRow}>
-            <Image
-              source={require('../../assets/icon.png')}
-              style={styles.brandIcon}
-            />
+            <Image source={require('../../assets/icon.png')} style={styles.brandIcon} />
             <Text style={styles.brandName}>Cravely</Text>
           </View>
           <Text style={styles.greetingText}>
-            Hey, {user?.name ?? 'there'}!
+            {greeting()}{firstName ? `, ${firstName}` : ''} 👋
           </Text>
-
-          {/* <TouchableOpacity style={styles.locationRow}>
-            <Text style={styles.subtitle}>Delivering to</Text>
-            <Ionicons name="chevron-down" size={14} color={Colors.light.primary} style={styles.chevronIcon} />
-          </TouchableOpacity> 
-          <Text style={styles.addressText}>123 Lekki Phase 1, Lagos</Text> */}
         </View>
 
-        {/* Right side: Actions */}
-        <View style={styles.actionContainer}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Ionicons name="notifications-outline" size={24} color={Colors.light.text} />
-            <View style={styles.badge} />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push('/user-profile')} activeOpacity={0.8}>
-            <Image
-              source={{ uri: user?.avatar ?? 'https://ui-avatars.com/api/?name=User&background=FF5A5F&color=fff' }}
-              style={styles.avatar}
-            />
-          </TouchableOpacity>
-        </View>
-
+        <TouchableOpacity
+          onPress={() => router.push('/user-profile')}
+          activeOpacity={0.8}
+          accessibilityLabel="Open profile"
+        >
+          <Image source={{ uri: avatarUrlFor(profile?.fullName, profile?.avatarUrl) }} style={styles.avatar} />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -66,10 +53,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     zIndex: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'transparent', // Flat by default
+    borderBottomColor: 'transparent',
   },
   safeAreaScrolled: {
-    borderBottomColor: '#EAEAEA', // Crisp line when scrolled
+    borderBottomColor: '#EAEAEA',
   },
   container: {
     flexDirection: 'row',
@@ -97,46 +84,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginRight: 8,
   },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  subtitle: {
-    fontSize: Typography.sizes.small,
-    color: '#888',
-    fontWeight: '600',
-  },
-  chevronIcon: {
-    marginLeft: 4,
-  },
-  addressText: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-    marginTop: 2,
-  },
-  actionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconButton: {
-    padding: 8,
-    marginRight: 12,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 20,
-    position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    backgroundColor: Colors.light.primary,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: 'white',
-  },
   avatar: {
     width: 44,
     height: 44,
@@ -148,8 +95,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.medium,
     fontWeight: Typography.weights.bold,
     color: Colors.light.text,
-    marginTop: 2,
-    marginLeft: 10,
+    marginTop: 4,
   },
 });
-

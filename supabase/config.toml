@@ -1,0 +1,5 @@
+# Function overrides for the Supabase CLI. If you run `npx supabase init`,
+# merge these sections into the generated config.toml.
+
+[functions.paystack-webhook]
+verify_jwt = false

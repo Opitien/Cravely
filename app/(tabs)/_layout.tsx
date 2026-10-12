@@ -3,7 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../../src/context/CartContext';
 import Colors from '../../src/constants/Colors';
 
-// Tab layout for the main navigation
 export default function TabLayout() {
   const { totalItems } = useCart();
 
@@ -17,13 +16,10 @@ export default function TabLayout() {
           backgroundColor: 'white',
           borderTopWidth: 1,
           borderTopColor: '#F0F0F0',
-          paddingBottom: 4,
-          height: 60,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          marginBottom: 4,
         },
       }}
     >
@@ -49,7 +45,6 @@ export default function TabLayout() {
         name="cart"
         options={{
           title: 'Cart',
-          // Show a red badge when there are items in the cart
           tabBarBadge: totalItems > 0 ? totalItems : undefined,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'cart' : 'cart-outline'} size={24} color={color} />
@@ -57,7 +52,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="favorites"
         options={{
           title: 'Favourites',
           tabBarIcon: ({ color, focused }) => (

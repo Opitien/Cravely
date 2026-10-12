@@ -1,26 +1,35 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import CategoryItem from './CategoryItem';
-import { mockCategories } from '../utils/mockData';
+import { Category } from '../types';
 
-export default function CategoryList() {
-  const [selectedId, setSelectedId] = useState<string>(mockCategories[0].id);
+const ALL: Category = { id: 'all', slug: '', name: 'All', icon: '🍽️' };
 
+interface CategoryListProps {
+  categories: Category[];
+  selectedSlug: string | null; // null = All
+  onSelect: (slug: string | null) => void;
+}
+
+export default function CategoryList({ categories, selectedSlug, onSelect }: CategoryListProps) {
   return (
     <View style={styles.container}>
       <FlatList
-        data={mockCategories}
+        data={[ALL, ...categories]}
         keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <CategoryItem 
-            category={item} 
-            isSelected={item.id === selectedId}
-            onPress={() => setSelectedId(item.id)}
-          />
-        )}
+        renderItem={({ item }) => {
+          const slug = item.id === ALL.id ? null : item.slug;
+          return (
+            <CategoryItem
+              category={item}
+              isSelected={slug === selectedSlug}
+              onPress={() => onSelect(slug)}
+            />
+          );
+        }}
       />
     </View>
   );

@@ -1,122 +1,44 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
+import { Image } from 'expo-image';
 import { CartItem } from '../types';
-import Colors from '../constants/Colors';
-import Typography from '../constants/Typography';
 import { useCart } from '../context/CartContext';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { formatNaira } from '../lib/format';
+import { makeStyles } from '../theme';
+import { Text } from '../ui';
+import QuantityStepper from './QuantityStepper';
 
-interface CartItemCardProps {
-  item: CartItem;
-}
-
-export default function CartItemCard({ item }: CartItemCardProps) {
-  const { increaseQuantity, removeFromCart } = useCart();
+export default function CartItemCard({ item, last }: { item: CartItem; last?: boolean }) {
+  const styles = useStyles();
+  const { increaseQuantity, decreaseQuantity } = useCart();
 
   return (
-
-    <TouchableOpacity
-      onPress={() => router.push(`/restaurant/${item.restaurantId}`)} >
-      < View style={styles.card} >
-        <Image source={{ uri: item.image }} style={styles.image} />
-
-        <View style={styles.details}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.restaurantName}>{item.restaurantName}</Text>
-          <Text style={styles.price}>₦{(item.price * item.quantity).toLocaleString()}</Text>
-        </View>
-
-        <View style={styles.quantityContainer}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => removeFromCart(item.id)}
-          >
-            <Ionicons name="remove" size={18} color={Colors.light.primary} />
-          </TouchableOpacity>
-
-          <Text style={styles.quantity}>{item.quantity}</Text>
-
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => increaseQuantity(item.id)}
-          >
-            <Ionicons name="add" size={18} color={Colors.light.primary} />
-          </TouchableOpacity>
-        </View>
-      </View >
-    </TouchableOpacity >
+    <View style={[styles.row, !last && styles.divider]}>
+      {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.image} transition={200} /> : null}
+      <View style={styles.details}>
+        <Text variant="bodyStrong" numberOfLines={2}>
+          {item.name}
+        </Text>
+        <Text variant="caption" tone="muted">
+          {formatNaira(item.price)} each
+        </Text>
+        <Text variant="bodyStrong" tone="primary" style={{ marginTop: 4 }}>
+          {formatNaira(item.price * item.quantity)}
+        </Text>
+      </View>
+      <QuantityStepper
+        size="sm"
+        quantity={item.quantity}
+        onIncrease={() => increaseQuantity(item.menuItemId)}
+        onDecrease={() => decreaseQuantity(item.menuItemId)}
+      />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    padding: 12,
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
-    marginBottom: 16,
-    alignItems: 'center',
-    // Shadow for iOS
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    // Shadow for Android
-    elevation: 2,
-  },
-  image: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
-    backgroundColor: '#eee',
-    marginRight: 12,
-  },
-  details: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  name: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-    marginBottom: 4,
-  },
-  restaurantName: {
-    fontSize: Typography.sizes.small,
-    color: '#888',
-    marginBottom: 6,
-  },
-  price: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.primary,
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 20,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-  },
-  actionButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  quantity: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    marginHorizontal: 12,
-    color: Colors.light.text,
-  },
-});
+const useStyles = makeStyles((t) => ({
+  row: { flexDirection: 'row', alignItems: 'center', gap: t.spacing.md, paddingVertical: t.spacing.md },
+  divider: { borderBottomWidth: 1, borderBottomColor: t.colors.border },
+  image: { width: 64, height: 64, borderRadius: t.radius.md, backgroundColor: t.colors.skeleton },
+  details: { flex: 1, gap: 2 },
+}));

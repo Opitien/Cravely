@@ -1,209 +1,134 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, StatusBar } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../../src/context/CartContext';
 import CartItemCard from '../../src/components/CartItemCard';
-import Colors from '../../src/constants/Colors';
-import Typography from '../../src/constants/Typography';
+import { formatNaira } from '../../src/lib/format';
+import { makeStyles, useTheme } from '../../src/theme';
+import { BottomBar, Button, Card, Divider, EmptyState, LargeTitle, Screen, SummaryRow, Text } from '../../src/ui';
 
 export default function CartScreen() {
-  const { items, cartTotal, clearCart, totalItems } = useCart();
+  const t = useTheme();
+  const styles = useStyles();
   const router = useRouter();
+  const { items, restaurant, subtotal, totalItems, clearCart } = useCart();
 
-  // Calculate delivery fee (Let's make it flat ₦1000 for simplicity if cart isn't empty)
-  const deliveryFee = cartTotal > 10000 ? 0 : 1000;
-
-  const finalTotal = cartTotal + deliveryFee;
-
-  // Empty state view
-  if (items.length === 0) {
+  if (items.length === 0 || !restaurant) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyEmoji}>🛒</Text>
-        <Text style={styles.emptyTitle}>Your cart is empty</Text>
-        <Text style={styles.emptySubtitle}>Looks like you haven't added anything yet.</Text>
-        <TouchableOpacity
-          style={styles.browseButton}
-          onPress={() => router.push('/(tabs)')}
-        >
-          <Text style={styles.browseButtonText}>Browse Restaurants</Text>
-        </TouchableOpacity>
-      </View>
+      <Screen>
+        <LargeTitle title="Your cart" />
+        <EmptyState
+          emoji="🛒"
+          title="Your cart is empty"
+          subtitle="Find something delicious and it will show up here."
+          actionLabel="Browse restaurants"
+          onAction={() => router.navigate('/')}
+        />
+      </Screen>
     );
   }
 
-  // The bottom summary area (Receipt)
-  const renderFooter = () => (
-    <View style={styles.summaryContainer}>
-      <Text style={styles.summaryTitle}>Order Summary</Text>
+  // Display estimate only; the server recalculates every amount when the order is placed.
+  const deliveryFee = restaurant.deliveryFee;
+  const total = subtotal + deliveryFee;
+  const shortBy = restaurant.minOrder - subtotal;
 
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Subtotal</Text>
-        <Text style={styles.summaryValue}>₦{cartTotal.toLocaleString()}</Text>
-      </View>
-
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Delivery Fee</Text>
-        <Text style={styles.summaryValue}>{deliveryFee === 0 ? 'Free' : `₦${deliveryFee.toLocaleString()}`}</Text>
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.summaryRow}>
-        <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.totalValue}>₦{finalTotal.toLocaleString()}</Text>
-      </View>
-
-      <TouchableOpacity
-        style={styles.clearButton}
-        onPress={clearCart}
-      >
-        <Text style={styles.clearButtonText}>Clear Cart</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.checkoutButton}
-        onPress={() => router.push('/checkout')} // Placeholder for checkout screen
-      >
-        <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const confirmClear = () =>
+    Alert.alert('Clear cart?', 'This removes every item from your cart.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Clear', style: 'destructive', onPress: clearCart },
+    ]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <FlatList
-        style={styles.container}
-        contentContainerStyle={styles.listContent}
-        data={items}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <CartItemCard item={item} />}
-        ListFooterComponent={renderFooter}
-        showsVerticalScrollIndicator={false}
+    <Screen>
+      <LargeTitle
+        title="Your cart"
+        subtitle={`${totalItems} item${totalItems !== 1 ? 's' : ''}`}
+        right={
+          <Pressable onPress={confirmClear} hitSlop={8} accessibilityRole="button">
+            <Text variant="label" tone="primary">
+              Clear
+            </Text>
+          </Pressable>
+        }
       />
-    </SafeAreaView>
+
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Card onPress={() => router.push(`/restaurant/${restaurant.id}`)} style={styles.restaurant}>
+          <Image source={{ uri: restaurant.imageUrl }} style={styles.restaurantImage} transition={200} />
+          <View style={{ flex: 1 }}>
+            <Text variant="caption" tone="muted">
+              Ordering from
+            </Text>
+            <Text variant="subheading" numberOfLines={1}>
+              {restaurant.name}
+            </Text>
+          </View>
+          <View style={styles.addMore}>
+            <Ionicons name="add" size={16} color={t.colors.primary} />
+            <Text variant="label" tone="primary">
+              Add items
+            </Text>
+          </View>
+        </Card>
+
+        <Card style={styles.items}>
+          {items.map((item, i) => (
+            <CartItemCard key={item.menuItemId} item={item} last={i === items.length - 1} />
+          ))}
+        </Card>
+
+        <Card>
+          <SummaryRow label="Subtotal" value={formatNaira(subtotal)} />
+          <SummaryRow label="Delivery fee" value={deliveryFee === 0 ? 'Free' : formatNaira(deliveryFee)} />
+          <Divider style={{ marginVertical: t.spacing.md }} />
+          <SummaryRow label="Total" value={formatNaira(total)} strong />
+        </Card>
+
+        {shortBy > 0 && (
+          <View style={styles.notice}>
+            <Ionicons name="information-circle" size={18} color={t.colors.warning} />
+            <Text variant="caption" style={{ color: t.colors.warning, flex: 1 }}>
+              Add {formatNaira(shortBy)} more to reach the {formatNaira(restaurant.minOrder)} minimum order.
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+
+      <BottomBar>
+        <Button
+          title="Go to checkout"
+          trailing={formatNaira(total)}
+          onPress={() => router.push('/checkout')}
+          disabled={shortBy > 0}
+        />
+      </BottomBar>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-  },
-  container: {
-    flex: 1,
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-
-  // Empty State Styles
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.light.background,
-    padding: 24,
-  },
-  emptyEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: Typography.sizes.xlarge,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: Typography.sizes.medium,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  browseButton: {
-    backgroundColor: Colors.light.primary,
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 30,
-  },
-  browseButtonText: {
-    color: 'white',
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-  },
-
-  // Summary Styles
-  summaryContainer: {
-    marginTop: 24,
-    backgroundColor: '#F9F9F9',
-    padding: 20,
-    borderRadius: 16,
-  },
-  summaryTitle: {
-    fontSize: Typography.sizes.large,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-    marginBottom: 16,
-  },
-  summaryRow: {
+const useStyles = makeStyles((t) => ({
+  content: { paddingHorizontal: t.spacing.xl, paddingBottom: t.spacing.xxl, gap: t.spacing.lg },
+  restaurant: { flexDirection: 'row', alignItems: 'center', gap: t.spacing.md },
+  restaurantImage: { width: 48, height: 48, borderRadius: t.radius.md, backgroundColor: t.colors.skeleton },
+  addMore: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  summaryLabel: {
-    fontSize: Typography.sizes.medium,
-    color: '#666',
-  },
-  summaryValue: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#EAEAEA',
-    marginVertical: 12,
-  },
-  totalLabel: {
-    fontSize: Typography.sizes.large,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-  },
-  totalValue: {
-    fontSize: Typography.sizes.large,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.primary,
-  },
-
-  clearButton: {
-    borderColor: Colors.light.primary,
-    borderWidth: 1,
-    padding: 18,
-    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 24,
+    gap: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: t.radius.pill,
+    backgroundColor: t.colors.primarySoft,
   },
-  clearButtonText: {
-    color: Colors.light.primary,
-    fontSize: Typography.sizes.large,
-    fontWeight: Typography.weights.bold,
-  },
-
-  checkoutButton: {
-    backgroundColor: Colors.light.primary,
-    padding: 18,
-    borderRadius: 12,
+  items: { paddingVertical: t.spacing.xs },
+  notice: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
+    gap: t.spacing.sm,
+    padding: t.spacing.md,
+    borderRadius: t.radius.md,
+    backgroundColor: t.colors.warningSoft,
   },
-  checkoutButtonText: {
-    color: 'white',
-    fontSize: Typography.sizes.large,
-    fontWeight: Typography.weights.bold,
-  },
-});
-
+}));

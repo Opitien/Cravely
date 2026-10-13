@@ -5,10 +5,13 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "scheme": "food-app",
+    "userInterfaceStyle": "automatic",
+    "scheme": "cravely",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-web-browser",
+      "expo-image",
+      "expo-font"
     ],
     "description": "Your cravings, delivered. A fast, modern food delivery experience.",
     "splash": {
@@ -17,8 +20,12 @@
       "backgroundColor": "#131929"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.cravely.app"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.cravely.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,7 +33,8 @@
         "foregroundImage": "./assets/icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.cravely.app"
+      "package": "com.cravely.app",
+      "versionCode": 1
     },
     "web": {
       "output": "static",

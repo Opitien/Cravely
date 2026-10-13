@@ -1,95 +1,104 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useCart } from '../context/CartContext';
-import Colors from '../constants/Colors';
-import Typography from '../constants/Typography';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCart } from '../context/CartContext';
+import { formatNaira } from '../lib/format';
+import { makeStyles, useTheme } from '../theme';
+import { Text } from '../ui';
 
-export default function FloatingCartButton() {
-  const { totalItems, cartTotal, clearCart } = useCart();
+/** Sticky "View cart" bar shown over browse screens while the cart has items. */
+export default function FloatingCartButton({ bottomOffset = 0 }: { bottomOffset?: number }) {
+  const t = useTheme();
+  const styles = useStyles();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { totalItems, subtotal, restaurant } = useCart();
+  const slide = useRef(new Animated.Value(totalItems > 0 ? 1 : 0)).current;
 
-  // If the cart is empty, don't show the button at all
-  if (totalItems === 0) {
-    return null;
-  }
+  useEffect(() => {
+    Animated.spring(slide, { toValue: totalItems > 0 ? 1 : 0, useNativeDriver: true, friction: 8 }).start();
+  }, [totalItems, slide]);
 
-  const handlePress = () => {
-    // Navigate to the cart tab
-    router.push('/(tabs)/cart');
-  };
+  if (totalItems === 0) return null;
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={handlePress} activeOpacity={0.9}>
+    <Animated.View
+      style={[
+        styles.container,
+        { bottom: bottomOffset + Math.max(insets.bottom, 12) },
+        { opacity: slide, transform: [{ translateY: slide.interpolate({ inputRange: [0, 1], outputRange: [80, 0] }) }] },
+      ]}
+    >
+      <Pressable
+        onPress={() => router.push('/cart')}
+        accessibilityRole="button"
+        accessibilityLabel={`View cart, ${totalItems} items, ${formatNaira(subtotal)}`}
+        style={({ pressed }) => [styles.button, pressed && { backgroundColor: t.colors.primaryPressed }]}
+      >
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{totalItems}</Text>
+          <Ionicons name="bag-handle" size={18} color={t.colors.textOnPrimary} />
+          <View style={styles.count}>
+            <Text variant="caption" style={styles.countText}>
+              {totalItems}
+            </Text>
+          </View>
         </View>
-
-        <Text style={styles.buttonText}>View Cart</Text>
-
-        <TouchableOpacity onPress={clearCart} style={styles.clearButton}>
-          <Ionicons name="trash-outline" size={18} color="white" />
-        </TouchableOpacity>
-
-        <Text style={styles.priceText}>₦{cartTotal.toLocaleString()}</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={{ flex: 1 }}>
+          <Text variant="subheading" tone="inverse">
+            View cart
+          </Text>
+          {restaurant && (
+            <Text variant="caption" style={styles.subtle} numberOfLines={1}>
+              {restaurant.name}
+            </Text>
+          )}
+        </View>
+        <Text variant="subheading" tone="inverse">
+          {formatNaira(subtotal)}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 24, // Floats above the bottom of the screen
-    left: 16,
-    right: 16,
-    zIndex: 100, // Make sure it stays on top of lists
-  },
+const useStyles = makeStyles((t) => ({
+  container: { position: 'absolute', left: t.spacing.lg, right: t.spacing.lg, zIndex: 100 },
   button: {
-    backgroundColor: Colors.light.primary,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    borderRadius: 32, // Pill shape
-    shadowColor: Colors.light.primary,
+    gap: t.spacing.md,
+    backgroundColor: t.colors.primary,
+    paddingHorizontal: t.spacing.lg,
+    paddingVertical: t.spacing.md,
+    borderRadius: t.radius.xl,
+    shadowColor: t.colors.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
     elevation: 8,
   },
   badge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    flex: 1,
-    textAlign: 'center',
-  },
-  clearButton: {
-    padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    marginRight: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  priceText: {
-    color: 'white',
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
+  count: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 5,
+    borderRadius: 10,
+    backgroundColor: t.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-});
+  countText: { color: t.colors.primary, fontFamily: t.fonts.extrabold },
+  subtle: { color: 'rgba(255,255,255,0.85)' },
+}));

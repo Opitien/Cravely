@@ -1,45 +1,57 @@
 import React from 'react';
-import { View, TextInput, StyleSheet } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '../constants/Colors';
+import { makeStyles, useTheme } from '../theme';
 
-export default function SearchBar() {
+interface SearchBarProps {
+  value: string;
+  onChangeText: (text: string) => void;
+}
+
+export default function SearchBar({ value, onChangeText }: SearchBarProps) {
+  const t = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.container}>
-      <Ionicons name="search" size={20} color="#999" style={styles.icon} />
+      <Ionicons name="search" size={20} color={t.colors.textMuted} />
       <TextInput
         style={styles.input}
-        placeholder="Search for restaurants or food"
-        placeholderTextColor="#A0A0A0"
+        placeholder="Search restaurants or dishes"
+        placeholderTextColor={t.colors.textMuted}
+        selectionColor={t.colors.primary}
+        value={value}
+        onChangeText={onChangeText}
+        returnKeyType="search"
+        autoCorrect={false}
+        accessibilityLabel="Search restaurants"
       />
+      {value.length > 0 && (
+        <Pressable onPress={() => onChangeText('')} hitSlop={10} accessibilityLabel="Clear search">
+          <Ionicons name="close-circle" size={20} color={t.colors.textMuted} />
+        </Pressable>
+      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    marginHorizontal: 20,
-    marginVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 16,
+    gap: t.spacing.sm + 2,
+    marginHorizontal: t.spacing.xl,
+    marginTop: t.spacing.xl,
+    paddingHorizontal: t.spacing.lg,
     height: 52,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  icon: {
-    marginRight: 10,
+    borderRadius: t.radius.lg,
+    backgroundColor: t.colors.surface,
+    ...t.shadow(1),
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: Colors.light.text,
+    fontFamily: t.fonts.medium,
+    fontSize: 15,
+    color: t.colors.text,
+    height: '100%',
   },
-});
+}));

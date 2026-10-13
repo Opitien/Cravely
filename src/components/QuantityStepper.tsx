@@ -1,56 +1,67 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '../constants/Colors';
-import Typography from '../constants/Typography';
+import * as Haptics from 'expo-haptics';
+import { makeStyles, useTheme } from '../theme';
+import { Text } from '../ui';
 
 interface QuantityStepperProps {
   quantity: number;
   onIncrease: () => void;
   onDecrease: () => void;
+  size?: 'sm' | 'md';
 }
 
-export default function QuantityStepper({ quantity, onIncrease, onDecrease }: QuantityStepperProps) {
+export default function QuantityStepper({ quantity, onIncrease, onDecrease, size = 'md' }: QuantityStepperProps) {
+  const t = useTheme();
+  const styles = useStyles();
+  const button = size === 'sm' ? 28 : 32;
+
+  const tap = (fn: () => void) => () => {
+    Haptics.selectionAsync().catch(() => undefined);
+    fn();
+  };
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={onDecrease} accessibilityLabel="Decrease quantity">
-        <Ionicons name={quantity === 1 ? 'trash-outline' : 'remove'} size={16} color={Colors.light.primary} />
-      </TouchableOpacity>
-      <Text style={styles.quantity}>{quantity}</Text>
-      <TouchableOpacity style={styles.button} onPress={onIncrease} accessibilityLabel="Increase quantity">
-        <Ionicons name="add" size={18} color={Colors.light.primary} />
-      </TouchableOpacity>
+      <Pressable
+        onPress={tap(onDecrease)}
+        hitSlop={6}
+        accessibilityLabel={quantity === 1 ? 'Remove item' : 'Decrease quantity'}
+        style={({ pressed }) => [styles.button, { width: button, height: button }, pressed && styles.pressed]}
+      >
+        <Ionicons name={quantity === 1 ? 'trash-outline' : 'remove'} size={16} color={t.colors.primary} />
+      </Pressable>
+      <Text variant="bodyStrong" style={styles.quantity} accessibilityLabel={`Quantity ${quantity}`}>
+        {quantity}
+      </Text>
+      <Pressable
+        onPress={tap(onIncrease)}
+        hitSlop={6}
+        accessibilityLabel="Increase quantity"
+        style={({ pressed }) => [styles.button, styles.plus, { width: button, height: button }, pressed && styles.pressed]}
+      >
+        <Ionicons name="add" size={18} color={t.colors.textOnPrimary} />
+      </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 20,
-    padding: 4,
+    backgroundColor: t.colors.surfaceMuted,
+    borderRadius: t.radius.pill,
+    padding: 3,
   },
   button: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'white',
-    justifyContent: 'center',
+    borderRadius: t.radius.pill,
+    backgroundColor: t.colors.surface,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    justifyContent: 'center',
   },
-  quantity: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    marginHorizontal: 12,
-    color: Colors.light.text,
-    minWidth: 16,
-    textAlign: 'center',
-  },
-});
+  plus: { backgroundColor: t.colors.primary },
+  pressed: { transform: [{ scale: 0.9 }] },
+  quantity: { minWidth: 28, textAlign: 'center' },
+}));

@@ -1,100 +1,104 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '../context/CartContext';
-import Colors from '../constants/Colors';
-import Typography from '../constants/Typography';
 import { formatNaira } from '../lib/format';
+import { makeStyles, useTheme } from '../theme';
+import { Text } from '../ui';
 
-export default function FloatingCartButton() {
-  const { totalItems, subtotal, restaurant } = useCart();
+/** Sticky "View cart" bar shown over browse screens while the cart has items. */
+export default function FloatingCartButton({ bottomOffset = 0 }: { bottomOffset?: number }) {
+  const t = useTheme();
+  const styles = useStyles();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { totalItems, subtotal, restaurant } = useCart();
+  const slide = useRef(new Animated.Value(totalItems > 0 ? 1 : 0)).current;
 
-  if (totalItems === 0) {
-    return null;
-  }
+  useEffect(() => {
+    Animated.spring(slide, { toValue: totalItems > 0 ? 1 : 0, useNativeDriver: true, friction: 8 }).start();
+  }, [totalItems, slide]);
+
+  if (totalItems === 0) return null;
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.button}
+    <Animated.View
+      style={[
+        styles.container,
+        { bottom: bottomOffset + Math.max(insets.bottom, 12) },
+        { opacity: slide, transform: [{ translateY: slide.interpolate({ inputRange: [0, 1], outputRange: [80, 0] }) }] },
+      ]}
+    >
+      <Pressable
         onPress={() => router.push('/cart')}
-        activeOpacity={0.9}
         accessibilityRole="button"
         accessibilityLabel={`View cart, ${totalItems} items, ${formatNaira(subtotal)}`}
+        style={({ pressed }) => [styles.button, pressed && { backgroundColor: t.colors.primaryPressed }]}
       >
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{totalItems}</Text>
+          <Ionicons name="bag-handle" size={18} color={t.colors.textOnPrimary} />
+          <View style={styles.count}>
+            <Text variant="caption" style={styles.countText}>
+              {totalItems}
+            </Text>
+          </View>
         </View>
-
-        <View style={styles.textContainer}>
-          <Text style={styles.buttonText}>View Cart</Text>
+        <View style={{ flex: 1 }}>
+          <Text variant="subheading" tone="inverse">
+            View cart
+          </Text>
           {restaurant && (
-            <Text style={styles.restaurantText} numberOfLines={1}>
+            <Text variant="caption" style={styles.subtle} numberOfLines={1}>
               {restaurant.name}
             </Text>
           )}
         </View>
-
-        <Text style={styles.priceText}>{formatNaira(subtotal)}</Text>
-      </TouchableOpacity>
-    </View>
+        <Text variant="subheading" tone="inverse">
+          {formatNaira(subtotal)}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 24,
-    left: 16,
-    right: 16,
-    zIndex: 100,
-  },
+const useStyles = makeStyles((t) => ({
+  container: { position: 'absolute', left: t.spacing.lg, right: t.spacing.lg, zIndex: 100 },
   button: {
-    backgroundColor: Colors.light.primary,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 32,
-    shadowColor: Colors.light.primary,
+    gap: t.spacing.md,
+    backgroundColor: t.colors.primary,
+    paddingHorizontal: t.spacing.lg,
+    paddingVertical: t.spacing.md,
+    borderRadius: t.radius.xl,
+    shadowColor: t.colors.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
     elevation: 8,
   },
   badge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  count: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 5,
+    borderRadius: 10,
+    backgroundColor: t.colors.surface,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  badgeText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  textContainer: {
-    flex: 1,
-    alignItems: 'center',
-    marginHorizontal: 12,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-  },
-  restaurantText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 12,
-    marginTop: 1,
-  },
-  priceText: {
-    color: 'white',
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-  },
-});
+  countText: { color: t.colors.primary, fontFamily: t.fonts.extrabold },
+  subtle: { color: 'rgba(255,255,255,0.85)' },
+}));

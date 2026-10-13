@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useProfile, useUpdateProfile } from '../../src/hooks/queries';
-import { FormField, PrimaryButton } from '../../src/components/Form';
-import { LoadingState } from '../../src/components/ScreenState';
-import Colors from '../../src/constants/Colors';
 import { getErrorMessage } from '../../src/lib/format';
 import { isValidPhone } from '../../src/lib/validation';
+import { makeStyles } from '../../src/theme';
+import { BottomBar, Button, LoadingState, TextField } from '../../src/ui';
 
 export default function EditProfileScreen() {
+  const styles = useStyles();
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
   const update = useUpdateProfile();
@@ -23,56 +23,53 @@ export default function EditProfileScreen() {
     }
   }, [profile]);
 
-  if (isLoading) return <LoadingState style={styles.container} />;
+  if (isLoading) return <LoadingState />;
 
   const handleSave = () => {
     const next: typeof errors = {};
-    if (fullName.trim().length < 2) next.fullName = 'Please enter your full name.';
+    if (fullName.trim().length < 2) next.fullName = 'Enter your full name.';
     if (phone.trim() && !isValidPhone(phone)) next.phone = 'Enter a valid Nigerian phone number.';
     setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    if (Object.keys(next).length) return;
 
     update.mutate(
       { fullName, phone },
-      {
-        onSuccess: () => router.back(),
-        onError: (e) => Alert.alert('Could not save', getErrorMessage(e)),
-      }
+      { onSuccess: () => router.back(), onError: (e) => Alert.alert('Could not save', getErrorMessage(e)) }
     );
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <FormField
+        <TextField
           label="Full name"
+          icon="person-outline"
           value={fullName}
           onChangeText={setFullName}
           autoCapitalize="words"
           autoComplete="name"
           error={errors.fullName}
         />
-        <FormField
+        <TextField
           label="Phone number"
+          icon="call-outline"
           value={phone}
           onChangeText={setPhone}
           placeholder="0803 123 4567"
           keyboardType="phone-pad"
           autoComplete="tel"
+          hint="Riders use this to reach you."
           error={errors.phone}
         />
-        <PrimaryButton title="Save changes" onPress={handleSave} loading={update.isPending} style={{ marginTop: 8 }} />
       </ScrollView>
+      <BottomBar>
+        <Button title="Save changes" onPress={handleSave} loading={update.isPending} />
+      </BottomBar>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  content: {
-    padding: 20,
-  },
-});
+const useStyles = makeStyles((t) => ({
+  screen: { flex: 1, backgroundColor: t.colors.background },
+  content: { padding: t.spacing.xl },
+}));

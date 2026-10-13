@@ -1,65 +1,48 @@
+import React from 'react';
+import { ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../../src/context/CartContext';
-import Colors from '../../src/constants/Colors';
+import { useTheme } from '../../src/theme';
+
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const tabIcon =
+  (active: IconName, inactive: IconName) =>
+  ({ color, focused }: { color: ColorValue; focused: boolean }) => (
+    <Ionicons name={focused ? active : inactive} size={24} color={color} />
+  );
 
 export default function TabLayout() {
+  const t = useTheme();
   const { totalItems } = useCart();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.light.primary,
-        tabBarInactiveTintColor: '#999',
         headerShown: false,
+        tabBarActiveTintColor: t.colors.primary,
+        tabBarInactiveTintColor: t.colors.textMuted,
         tabBarStyle: {
-          backgroundColor: 'white',
-          borderTopWidth: 1,
-          borderTopColor: '#F0F0F0',
+          backgroundColor: t.colors.tabBar,
+          borderTopColor: t.colors.border,
+          paddingTop: 4,
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-        },
+        tabBarLabelStyle: { fontFamily: t.fonts.semibold, fontSize: 11 },
+        tabBarBadgeStyle: { backgroundColor: t.colors.primary, fontFamily: t.fonts.bold, fontSize: 11 },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: 'Orders',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'receipt' : 'receipt-outline'} size={24} color={color} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: tabIcon('home', 'home-outline') }} />
+      <Tabs.Screen name="orders" options={{ title: 'Orders', tabBarIcon: tabIcon('receipt', 'receipt-outline') }} />
       <Tabs.Screen
         name="cart"
         options={{
           title: 'Cart',
           tabBarBadge: totalItems > 0 ? totalItems : undefined,
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'cart' : 'cart-outline'} size={24} color={color} />
-          ),
+          tabBarIcon: tabIcon('bag-handle', 'bag-handle-outline'),
         }}
       />
-      <Tabs.Screen
-        name="favorites"
-        options={{
-          title: 'Favourites',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'heart' : 'heart-outline'} size={24} color={color} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="favorites" options={{ title: 'Saved', tabBarIcon: tabIcon('heart', 'heart-outline') }} />
     </Tabs>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { LoadingState } from '../../src/components/ScreenState';
+import { LoadingState } from '../../src/ui';
 
 // On web, Paystack redirects the checkout popup here; this hands the result back to the opener.
 WebBrowser.maybeCompleteAuthSession();

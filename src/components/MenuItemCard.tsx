@@ -1,20 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { MenuItem, RestaurantWithMenu } from '../types';
-import Colors from '../constants/Colors';
-import Typography from '../constants/Typography';
 import { useCart } from '../context/CartContext';
 import { formatNaira } from '../lib/format';
+import { makeStyles, useTheme } from '../theme';
+import { Pill, Text } from '../ui';
 import QuantityStepper from './QuantityStepper';
-import { Ionicons } from '@expo/vector-icons';
 
 interface MenuItemCardProps {
   item: MenuItem;
   restaurant: RestaurantWithMenu;
 }
 
-// A single menu item row. Shows "+" until it's in the cart, then a quantity stepper.
 export default function MenuItemCard({ item, restaurant }: MenuItemCardProps) {
+  const t = useTheme();
+  const styles = useStyles();
   const { addToCart, replaceCart, increaseQuantity, decreaseQuantity, quantityOf, restaurant: cartRestaurant } =
     useCart();
   const quantity = quantityOf(item.id);
@@ -22,116 +25,99 @@ export default function MenuItemCard({ item, restaurant }: MenuItemCardProps) {
 
   const handleAdd = () => {
     const result = addToCart(item, restaurant);
-    if (result === 'different_restaurant') {
-      Alert.alert(
-        'Start a new cart?',
-        `Your cart has items from ${cartRestaurant?.name}. Clear it and add items from ${restaurant.name} instead?`,
-        [
-          { text: 'Keep current cart', style: 'cancel' },
-          { text: 'Start new cart', style: 'destructive', onPress: () => replaceCart(item, restaurant) },
-        ]
-      );
+    if (result === 'added') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+      return;
     }
+    Alert.alert(
+      'Start a new cart?',
+      `Your cart has items from ${cartRestaurant?.name}. Clear it and add this from ${restaurant.name} instead?`,
+      [
+        { text: 'Keep current cart', style: 'cancel' },
+        { text: 'Start new cart', style: 'destructive', onPress: () => replaceCart(item, restaurant) },
+      ]
+    );
   };
 
   return (
-    <View style={[styles.card, !canOrder && styles.cardDisabled]}>
-      <View style={styles.textContainer}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.description} numberOfLines={2}>
-          {item.description}
+    <View style={[styles.row, !canOrder && styles.disabled]}>
+      <View style={styles.text}>
+        <Text variant="subheading" numberOfLines={2}>
+          {item.name}
         </Text>
+        {item.description ? (
+          <Text variant="caption" tone="secondary" numberOfLines={2} style={styles.description}>
+            {item.description}
+          </Text>
+        ) : null}
         <View style={styles.priceRow}>
-          <Text style={styles.price}>{formatNaira(item.price)}</Text>
-          {!item.isAvailable ? (
-            <Text style={styles.soldOut}>Sold out</Text>
-          ) : !restaurant.isOpen ? null : quantity > 0 ? (
+          <Text variant="bodyStrong">{formatNaira(item.price)}</Text>
+          {!item.isAvailable && <Pill label="Sold out" color={t.colors.danger} background={t.colors.dangerSoft} />}
+        </View>
+        {quantity > 0 && canOrder && (
+          <View style={styles.stepper}>
             <QuantityStepper
+              size="sm"
               quantity={quantity}
               onIncrease={() => increaseQuantity(item.id)}
               onDecrease={() => decreaseQuantity(item.id)}
             />
-          ) : (
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={handleAdd}
-              accessibilityLabel={`Add ${item.name} to cart`}
-            >
-              <Ionicons name="add" size={20} color="white" />
-            </TouchableOpacity>
-          )}
-        </View>
+          </View>
+        )}
       </View>
 
-      {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.image} /> : null}
+      <View style={styles.imageWrap}>
+        {item.imageUrl ? (
+          <Image source={{ uri: item.imageUrl }} style={styles.image} contentFit="cover" transition={200} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Text style={{ fontSize: 32 }}>🍽️</Text>
+          </View>
+        )}
+        {canOrder && quantity === 0 && (
+          <Pressable
+            onPress={handleAdd}
+            accessibilityRole="button"
+            accessibilityLabel={`Add ${item.name} to cart`}
+            hitSlop={6}
+            style={({ pressed }) => [styles.addButton, pressed && { transform: [{ scale: 0.9 }] }]}
+          >
+            <Ionicons name="add" size={22} color={t.colors.textOnPrimary} />
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
+const useStyles = makeStyles((t) => ({
+  row: {
     flexDirection: 'row',
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    gap: t.spacing.lg,
+    paddingVertical: t.spacing.lg,
+    marginHorizontal: t.spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: t.colors.border,
   },
-  cardDisabled: {
-    opacity: 0.6,
-  },
-  textContainer: {
-    flex: 1,
-    marginRight: 12,
-    justifyContent: 'center',
-  },
-  name: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-    marginBottom: 4,
-  },
-  description: {
-    fontSize: 13,
-    color: '#888',
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  price: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.primary,
-  },
-  soldOut: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.light.danger,
-  },
+  disabled: { opacity: 0.55 },
+  text: { flex: 1, justifyContent: 'center' },
+  description: { marginTop: 4 },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: t.spacing.sm, marginTop: t.spacing.sm },
+  stepper: { marginTop: t.spacing.md, alignSelf: 'flex-start' },
+  imageWrap: { width: 112, height: 112 },
+  image: { width: 112, height: 112, borderRadius: t.radius.lg, backgroundColor: t.colors.skeleton },
+  imagePlaceholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: t.colors.surfaceMuted },
   addButton: {
-    backgroundColor: Colors.light.primary,
-    borderRadius: 20,
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
+    position: 'absolute',
+    right: -6,
+    bottom: -6,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: t.colors.primary,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: t.colors.background,
   },
-  image: {
-    width: 90,
-    height: 90,
-    borderRadius: 12,
-    backgroundColor: '#eee',
-  },
-});
+}));

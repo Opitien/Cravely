@@ -1,51 +1,38 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  Image,
-  Dimensions,
-  ScrollView,
-} from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Alert, Pressable, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../../src/context/AuthContext';
-import Colors from '../../src/constants/Colors';
-import Typography from '../../src/constants/Typography';
+import AuthLayout from '../../src/components/AuthLayout';
+import Links from '../../src/constants/Links';
 import { getErrorMessage } from '../../src/lib/format';
 import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH } from '../../src/lib/validation';
+import { makeStyles } from '../../src/theme';
+import { Button, Text, TextField } from '../../src/ui';
 
-const { height } = Dimensions.get('window');
+type Errors = Partial<Record<'name' | 'email' | 'password', string>>;
 
 export default function SignUpScreen() {
+  const styles = useStyles();
   const router = useRouter();
   const { signUp } = useAuth();
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignUp = async () => {
-    if (name.trim().length < 2) {
-      Alert.alert('Please enter your full name.');
-      return;
-    }
-    if (!EMAIL_PATTERN.test(email.trim())) {
-      Alert.alert('Please enter a valid email.');
-      return;
-    }
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      Alert.alert(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
-      return;
-    }
+    const next: Errors = {};
+    if (name.trim().length < 2) next.name = 'Enter your full name.';
+    if (!EMAIL_PATTERN.test(email.trim())) next.email = 'Enter a valid email address.';
+    if (password.length < MIN_PASSWORD_LENGTH) next.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`;
+    setErrors(next);
+    if (Object.keys(next).length) return;
+
     setIsLoading(true);
     try {
       const { needsConfirmation } = await signUp(name, email, password);
@@ -65,222 +52,80 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      {/* ── DARK HERO SECTION ── */}
-      <View style={styles.hero}>
-        <Image
-          source={require('../../assets/icon.png')}
-          style={styles.logo}
-        />
-        <Text style={styles.brandName}>CRAVELY</Text>
-        <Text style={styles.tagline}>Join thousands of food lovers 🍔</Text>
-      </View>
+    <AuthLayout title="Create your account" subtitle="It takes less than a minute.">
+      <TextField
+        label="Full name"
+        icon="person-outline"
+        placeholder="Ada Obi"
+        autoCapitalize="words"
+        autoComplete="name"
+        textContentType="name"
+        returnKeyType="next"
+        value={name}
+        onChangeText={setName}
+        onSubmitEditing={() => emailRef.current?.focus()}
+        error={errors.name}
+      />
+      <TextField
+        ref={emailRef}
+        label="Email"
+        icon="mail-outline"
+        placeholder="you@example.com"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoComplete="email"
+        textContentType="emailAddress"
+        returnKeyType="next"
+        value={email}
+        onChangeText={setEmail}
+        onSubmitEditing={() => passwordRef.current?.focus()}
+        error={errors.email}
+      />
+      <TextField
+        ref={passwordRef}
+        label="Password"
+        icon="lock-closed-outline"
+        placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+        password
+        autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="go"
+        value={password}
+        onChangeText={setPassword}
+        onSubmitEditing={handleSignUp}
+        error={errors.password}
+      />
 
-      {/* ── WHITE FORM CARD ── */}
-      <KeyboardAvoidingView
-        style={styles.cardWrapper}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.card}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+      <Button title="Create account" onPress={handleSignUp} loading={isLoading} style={{ marginTop: 4 }} />
+
+      <Text variant="caption" tone="muted" center style={styles.legal}>
+        By continuing you agree to our{' '}
+        <Text variant="caption" tone="primary" onPress={() => WebBrowser.openBrowserAsync(Links.terms)}>
+          Terms
+        </Text>{' '}
+        and{' '}
+        <Text variant="caption" tone="primary" onPress={() => WebBrowser.openBrowserAsync(Links.privacyPolicy)}>
+          Privacy Policy
+        </Text>
+        .
+      </Text>
+
+      <View style={styles.footer}>
+        <Text tone="secondary">Already have an account? </Text>
+        <Pressable
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/auth/login'))}
+          hitSlop={8}
         >
-          <Text style={styles.cardTitle}>Create account 🚀</Text>
-          <Text style={styles.cardSubtitle}>It's quick and easy</Text>
-
-          {/* Full Name */}
-          <View style={styles.inputRow}>
-            <Ionicons name="person-outline" size={20} color="#999" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Full name"
-              placeholderTextColor="#bbb"
-              autoCapitalize="words"
-              autoComplete="name"
-              textContentType="name"
-              value={name}
-              onChangeText={setName}
-            />
-          </View>
-
-          {/* Email */}
-          <View style={styles.inputRow}>
-            <Ionicons name="mail-outline" size={20} color="#999" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email address"
-              placeholderTextColor="#bbb"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              textContentType="emailAddress"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
-
-          {/* Password */}
-          <View style={styles.inputRow}>
-            <Ionicons name="lock-closed-outline" size={20} color="#999" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder={`Password (min. ${MIN_PASSWORD_LENGTH} characters)`}
-              placeholderTextColor="#bbb"
-              secureTextEntry={!showPassword}
-              autoComplete="new-password"
-              textContentType="newPassword"
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color="#999"
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Create Account Button */}
-          <TouchableOpacity
-            style={[styles.button, isLoading && { opacity: 0.7 }]}
-            onPress={handleSignUp}
-            disabled={isLoading}
-            activeOpacity={0.85}
-          >
-            {isLoading
-              ? <ActivityIndicator color="white" />
-              : <Text style={styles.buttonText}>Create Account</Text>
-            }
-          </TouchableOpacity>
-
-          {/* Login link */}
-          <TouchableOpacity
-            style={styles.linkRow}
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/auth/login'))}
-          >
-            <Text style={styles.linkText}>Already have an account? </Text>
-            <Text style={styles.link}>Sign In</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+          <Text variant="bodyStrong" tone="primary">
+            Sign in
+          </Text>
+        </Pressable>
+      </View>
+    </AuthLayout>
   );
 }
 
-const HERO_HEIGHT = height * 0.35;
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.light.primary,
-  },
-
-  hero: {
-    height: HERO_HEIGHT,
-    backgroundColor: Colors.light.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? 40 : 60,
-    gap: 8,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-    shadowColor: Colors.light.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  brandName: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: 'white',
-    letterSpacing: 4,
-  },
-  tagline: {
-    fontSize: Typography.sizes.medium,
-    color: 'rgba(255,255,255,0.5)',
-  },
-
-  cardWrapper: {
-    flex: 1,
-  },
-  card: {
-    flexGrow: 1,
-    backgroundColor: 'white',
-    borderTopLeftRadius: 36,
-    borderTopRightRadius: 36,
-    paddingHorizontal: 28,
-    paddingTop: 32,
-    paddingBottom: 40,
-  },
-  cardTitle: {
-    fontSize: Typography.sizes.xlarge,
-    fontWeight: Typography.weights.bold,
-    color: '#111',
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: Typography.sizes.medium,
-    color: '#999',
-    marginBottom: 28,
-  },
-
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F6F6F6',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    marginBottom: 14,
-    borderWidth: 1.5,
-    borderColor: '#EFEFEF',
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: Typography.sizes.medium,
-    color: '#111',
-  },
-
-  button: {
-    backgroundColor: Colors.light.primary,
-    borderRadius: 14,
-    paddingVertical: 17,
-    alignItems: 'center',
-    marginTop: 6,
-    shadowColor: Colors.light.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: Typography.sizes.large,
-    fontWeight: Typography.weights.bold,
-    letterSpacing: 0.5,
-  },
-
-  linkRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
-  },
-  linkText: {
-    color: '#999',
-    fontSize: Typography.sizes.medium,
-  },
-  link: {
-    color: Colors.light.primary,
-    fontWeight: Typography.weights.bold,
-    fontSize: Typography.sizes.medium,
-  },
-});
+const useStyles = makeStyles((t) => ({
+  legal: { marginTop: t.spacing.lg },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: t.spacing.xl },
+}));

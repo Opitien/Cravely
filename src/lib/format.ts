@@ -1,4 +1,5 @@
 import { OrderStatus } from '../types';
+import type { Theme } from '../theme';
 
 export function formatNaira(amount: number) {
   return `₦${amount.toLocaleString('en-NG')}`;
@@ -27,17 +28,48 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   cancelled: 'Cancelled',
 };
 
-export const ORDER_STATUS_STYLE: Record<
-  OrderStatus,
-  { color: string; icon: 'time-outline' | 'receipt-outline' | 'flame-outline' | 'bicycle-outline' | 'checkmark-circle-outline' | 'close-circle-outline' }
-> = {
-  pending_payment: { color: '#9CA3AF', icon: 'time-outline' },
-  placed: { color: '#8B5CF6', icon: 'receipt-outline' },
-  preparing: { color: '#F59E0B', icon: 'flame-outline' },
-  on_the_way: { color: '#3B82F6', icon: 'bicycle-outline' },
-  delivered: { color: '#22C55E', icon: 'checkmark-circle-outline' },
-  cancelled: { color: '#EF4444', icon: 'close-circle-outline' },
+type StatusIcon =
+  | 'time-outline'
+  | 'receipt-outline'
+  | 'flame-outline'
+  | 'bicycle-outline'
+  | 'checkmark-circle-outline'
+  | 'close-circle-outline';
+
+/** Colours and icon for an order status, taken from the active theme. */
+export function orderStatusStyle(
+  status: OrderStatus,
+  c: Theme['colors']
+): { color: string; background: string; icon: StatusIcon } {
+  switch (status) {
+    case 'pending_payment':
+      return { color: c.textSecondary, background: c.surfaceMuted, icon: 'time-outline' };
+    case 'placed':
+      return { color: c.violet, background: c.violetSoft, icon: 'receipt-outline' };
+    case 'preparing':
+      return { color: c.warning, background: c.warningSoft, icon: 'flame-outline' };
+    case 'on_the_way':
+      return { color: c.info, background: c.infoSoft, icon: 'bicycle-outline' };
+    case 'delivered':
+      return { color: c.success, background: c.successSoft, icon: 'checkmark-circle-outline' };
+    case 'cancelled':
+      return { color: c.danger, background: c.dangerSoft, icon: 'close-circle-outline' };
+  }
+}
+
+/** One-line description shown under the status on the tracking screen. */
+export const ORDER_STATUS_DESCRIPTION: Record<OrderStatus, string> = {
+  pending_payment: 'Complete payment to send your order to the restaurant.',
+  placed: 'The restaurant has received your order.',
+  preparing: 'Your food is being prepared.',
+  on_the_way: 'Your rider is on the way to you.',
+  delivered: 'Enjoy your meal!',
+  cancelled: 'This order was cancelled.',
 };
+
+export function isActiveOrder(status: OrderStatus) {
+  return status === 'pending_payment' || status === 'placed' || status === 'preparing' || status === 'on_the_way';
+}
 
 // Turns Supabase/Postgres/network errors into something a customer can read.
 export function getErrorMessage(error: unknown, fallback = 'Something went wrong. Please try again.') {

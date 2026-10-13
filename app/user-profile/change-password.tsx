@@ -1,31 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Alert, Text, KeyboardAvoidingView, Platform } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
-import { FormField, PrimaryButton } from '../../src/components/Form';
-import Colors from '../../src/constants/Colors';
 import { getErrorMessage } from '../../src/lib/format';
 import { MIN_PASSWORD_LENGTH } from '../../src/lib/validation';
+import { makeStyles } from '../../src/theme';
+import { BottomBar, Button, Text, TextField } from '../../src/ui';
 
 export default function ChangePasswordScreen() {
+  const styles = useStyles();
   const router = useRouter();
   const { updatePassword, isPasswordRecovery, clearPasswordRecovery } = useAuth();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [errors, setErrors] = useState<{ password?: string; confirm?: string }>({});
   const [isSaving, setIsSaving] = useState(false);
 
   // If the user backs out of a reset flow, don't keep redirecting them here.
   useEffect(() => () => clearPasswordRecovery(), [clearPasswordRecovery]);
 
   const handleSave = async () => {
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      Alert.alert(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
-      return;
-    }
-    if (password !== confirm) {
-      Alert.alert('Passwords do not match.');
-      return;
-    }
+    const next: typeof errors = {};
+    if (password.length < MIN_PASSWORD_LENGTH) next.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`;
+    if (password !== confirm) next.confirm = 'Passwords do not match.';
+    setErrors(next);
+    if (Object.keys(next).length) return;
+
     setIsSaving(true);
     try {
       await updatePassword(password);
@@ -40,44 +40,45 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {isPasswordRecovery && <Text style={styles.hint}>Choose a new password for your account.</Text>}
-        <FormField
+        {isPasswordRecovery && (
+          <Text tone="secondary" style={styles.hint}>
+            Choose a new password for your account.
+          </Text>
+        )}
+        <TextField
           label="New password"
+          icon="lock-closed-outline"
+          password
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
           autoComplete="new-password"
           textContentType="newPassword"
           placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+          error={errors.password}
         />
-        <FormField
+        <TextField
           label="Confirm new password"
+          icon="lock-closed-outline"
+          password
           value={confirm}
           onChangeText={setConfirm}
-          secureTextEntry
           autoComplete="new-password"
           textContentType="newPassword"
           onSubmitEditing={handleSave}
+          error={errors.confirm}
         />
-        <PrimaryButton title="Update password" onPress={handleSave} loading={isSaving} style={{ marginTop: 8 }} />
       </ScrollView>
+      <BottomBar>
+        <Button title="Update password" onPress={handleSave} loading={isSaving} />
+      </BottomBar>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  content: {
-    padding: 20,
-  },
-  hint: {
-    fontSize: 15,
-    color: Colors.light.textMuted,
-    marginBottom: 20,
-  },
-});
+const useStyles = makeStyles((t) => ({
+  screen: { flex: 1, backgroundColor: t.colors.background },
+  content: { padding: t.spacing.xl },
+  hint: { marginBottom: t.spacing.xl },
+}));

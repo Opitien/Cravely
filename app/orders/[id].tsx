@@ -1,22 +1,35 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
+import { Alert, RefreshControl, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCancelOrder, useOrder, queryKeys } from '../../src/hooks/queries';
+import { queryKeys, useCancelOrder, useOrder } from '../../src/hooks/queries';
 import { getRestaurantById } from '../../src/services/api';
 import { useCart } from '../../src/context/CartContext';
-import { EmptyState, ErrorState, LoadingState } from '../../src/components/ScreenState';
 import { PAYMENT_METHOD_DETAILS } from '../../src/components/PaymentMethodCard';
-import { CartItem, OrderStatus } from '../../src/types';
-import Colors from '../../src/constants/Colors';
-import Typography from '../../src/constants/Typography';
-import { ORDER_STATUS_LABEL, ORDER_STATUS_STYLE, formatDate, formatNaira, getErrorMessage } from '../../src/lib/format';
+import { CartItem, Order, OrderStatus } from '../../src/types';
+import {
+  ORDER_STATUS_DESCRIPTION,
+  ORDER_STATUS_LABEL,
+  formatDate,
+  formatNaira,
+  getErrorMessage,
+  orderStatusStyle,
+} from '../../src/lib/format';
+import { makeStyles, useTheme } from '../../src/theme';
+import { Button, Card, Divider, EmptyState, ErrorState, LoadingState, SummaryRow, Text } from '../../src/ui';
 
-const PROGRESS: OrderStatus[] = ['placed', 'preparing', 'on_the_way', 'delivered'];
+const STEPS: { status: OrderStatus; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { status: 'placed', label: 'Order confirmed', icon: 'receipt' },
+  { status: 'preparing', label: 'Preparing your food', icon: 'flame' },
+  { status: 'on_the_way', label: 'Rider on the way', icon: 'bicycle' },
+  { status: 'delivered', label: 'Delivered', icon: 'checkmark' },
+];
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const t = useTheme();
+  const styles = useStyles();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { loadCart, items: cartItems } = useCart();
@@ -24,21 +37,18 @@ export default function OrderDetailScreen() {
   const cancel = useCancelOrder();
   const [isReordering, setIsReordering] = useState(false);
 
-  if (isLoading) return <LoadingState style={styles.screen} />;
-  if (error && !order) {
-    return <ErrorState message={getErrorMessage(error, 'Could not load this order.')} onRetry={refetch} style={styles.screen} />;
-  }
-  if (!order) return <EmptyState emoji="🧾" title="Order not found" style={styles.screen} />;
+  if (isLoading) return <LoadingState />;
+  if (error && !order) return <ErrorState message={getErrorMessage(error, 'Could not load this order.')} onRetry={refetch} />;
+  if (!order) return <EmptyState emoji="🧾" title="Order not found" />;
 
-  const statusStyle = ORDER_STATUS_STYLE[order.status];
+  const status = orderStatusStyle(order.status, t.colors);
   const canCancel = order.status === 'pending_payment' || order.status === 'placed';
   const needsPayment =
     order.status === 'pending_payment' && order.paymentMethod === 'paystack' && order.paymentStatus !== 'paid';
-  const currentStep = PROGRESS.indexOf(order.status);
 
-  const confirmCancel = () => {
+  const confirmCancel = () =>
     Alert.alert(
-      'Cancel order?',
+      'Cancel this order?',
       order.paymentStatus === 'paid'
         ? 'Your payment will be refunded to your original payment method.'
         : 'The restaurant will not prepare this order.',
@@ -47,14 +57,10 @@ export default function OrderDetailScreen() {
         {
           text: 'Cancel order',
           style: 'destructive',
-          onPress: () =>
-            cancel.mutate(order.id, {
-              onError: (e) => Alert.alert('Could not cancel', getErrorMessage(e)),
-            }),
+          onPress: () => cancel.mutate(order.id, { onError: (e) => Alert.alert('Could not cancel', getErrorMessage(e)) }),
         },
       ]
     );
-  };
 
   const reorder = async () => {
     setIsReordering(true);
@@ -69,10 +75,8 @@ export default function OrderDetailScreen() {
       }
       // Use today's menu prices; skip anything no longer sold.
       const items: CartItem[] = order.items.flatMap((line) => {
-        const menuItem = restaurant.menu.find((m) => m.id === line.menuItemId && m.isAvailable);
-        return menuItem
-          ? [{ menuItemId: menuItem.id, name: menuItem.name, price: menuItem.price, imageUrl: menuItem.imageUrl, quantity: line.quantity }]
-          : [];
+        const m = restaurant.menu.find((x) => x.id === line.menuItemId && x.isAvailable);
+        return m ? [{ menuItemId: m.id, name: m.name, price: m.price, imageUrl: m.imageUrl, quantity: line.quantity }] : [];
       });
       if (items.length === 0) {
         Alert.alert('Unavailable', 'None of these items are available any more.');
@@ -101,264 +105,166 @@ export default function OrderDetailScreen() {
     <ScrollView
       style={styles.screen}
       contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.light.primary} colors={[Colors.light.primary]} />
-      }
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={t.colors.primary} colors={[t.colors.primary]} />}
     >
-      {/* Status */}
-      <View style={styles.card}>
-        <View style={styles.rowBetween}>
-          <View>
-            <Text style={styles.orderNumber}>{order.orderNumber}</Text>
-            <Text style={styles.meta}>{formatDate(order.createdAt)}</Text>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusStyle.color + '20' }]}>
-            <Ionicons name={statusStyle.icon} size={14} color={statusStyle.color} />
-            <Text style={[styles.statusText, { color: statusStyle.color }]}>{ORDER_STATUS_LABEL[order.status]}</Text>
-          </View>
+      {/* Status hero */}
+      <Card style={styles.hero}>
+        <View style={[styles.heroIcon, { backgroundColor: status.background }]}>
+          <Ionicons name={status.icon} size={30} color={status.color} />
         </View>
-
-        {currentStep >= 0 && (
-          <View style={styles.progress}>
-            {PROGRESS.map((step, index) => {
-              const done = index <= currentStep;
-              return (
-                <View key={step} style={styles.progressStep}>
-                  <View style={[styles.progressDot, done && styles.progressDotDone]}>
-                    {done && <Ionicons name="checkmark" size={12} color="white" />}
-                  </View>
-                  <Text style={[styles.progressLabel, done && styles.progressLabelDone]}>{ORDER_STATUS_LABEL[step]}</Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
+        <Text variant="title" center style={{ marginTop: t.spacing.md }}>
+          {ORDER_STATUS_LABEL[order.status]}
+        </Text>
+        <Text tone="secondary" center style={{ marginTop: 4 }}>
+          {ORDER_STATUS_DESCRIPTION[order.status]}
+        </Text>
+        <Text variant="caption" tone="muted" center style={{ marginTop: t.spacing.sm }}>
+          {order.orderNumber} · {formatDate(order.createdAt)}
+        </Text>
         {needsPayment && (
-          <TouchableOpacity
-            style={styles.primaryButton}
+          <Button
+            title="Complete payment"
+            trailing={formatNaira(order.total)}
             onPress={() => router.push({ pathname: '/checkout/payment', params: { orderId: order.id } })}
-          >
-            <Text style={styles.primaryText}>Complete Payment · {formatNaira(order.total)}</Text>
-          </TouchableOpacity>
+            style={{ marginTop: t.spacing.xl, alignSelf: 'stretch' }}
+          />
         )}
-      </View>
+      </Card>
+
+      {order.status !== 'cancelled' && order.status !== 'pending_payment' && <Timeline order={order} />}
 
       {/* Items */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>{order.restaurantName}</Text>
+      <Card>
+        <Text variant="subheading" style={{ marginBottom: t.spacing.md }}>
+          {order.restaurantName}
+        </Text>
         {order.items.map((item) => (
-          <View key={item.id} style={styles.rowBetween}>
-            <Text style={styles.itemName} numberOfLines={2}>
-              {item.quantity}× {item.name}
-            </Text>
-            <Text style={styles.value}>{formatNaira(item.lineTotal)}</Text>
-          </View>
+          <SummaryRow key={item.id} label={`${item.quantity}×  ${item.name}`} value={formatNaira(item.lineTotal)} />
         ))}
-        <View style={styles.divider} />
-        <View style={styles.rowBetween}>
-          <Text style={styles.label}>Subtotal</Text>
-          <Text style={styles.value}>{formatNaira(order.subtotal)}</Text>
-        </View>
-        <View style={styles.rowBetween}>
-          <Text style={styles.label}>Delivery fee</Text>
-          <Text style={styles.value}>{order.deliveryFee === 0 ? 'Free' : formatNaira(order.deliveryFee)}</Text>
-        </View>
-        <View style={styles.rowBetween}>
-          <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>{formatNaira(order.total)}</Text>
-        </View>
-      </View>
+        <Divider style={{ marginVertical: t.spacing.md }} />
+        <SummaryRow label="Subtotal" value={formatNaira(order.subtotal)} />
+        <SummaryRow label="Delivery fee" value={order.deliveryFee === 0 ? 'Free' : formatNaira(order.deliveryFee)} />
+        <Divider style={{ marginVertical: t.spacing.md }} />
+        <SummaryRow label="Total" value={formatNaira(order.total)} strong />
+      </Card>
 
-      {/* Delivery & payment */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Delivery</Text>
-        <Text style={styles.body}>{order.deliveryAddress.line1}</Text>
-        <Text style={styles.meta}>
-          {order.deliveryAddress.city}, {order.deliveryAddress.state} · {order.deliveryAddress.phone}
-        </Text>
-        {order.deliveryAddress.instructions ? <Text style={styles.meta}>{order.deliveryAddress.instructions}</Text> : null}
-        {order.notes ? (
-          <>
-            <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Note</Text>
-            <Text style={styles.body}>{order.notes}</Text>
-          </>
-        ) : null}
+      {/* Delivery + payment */}
+      <Card style={{ gap: t.spacing.lg }}>
+        <InfoLine icon="location" title={order.deliveryAddress.label} lines={[
+          `${order.deliveryAddress.line1}, ${order.deliveryAddress.city}, ${order.deliveryAddress.state}`,
+          order.deliveryAddress.phone,
+          order.deliveryAddress.instructions ?? '',
+        ]} />
+        {order.notes ? <InfoLine icon="chatbubble-ellipses" title="Note for restaurant" lines={[order.notes]} /> : null}
+        <InfoLine
+          icon={PAYMENT_METHOD_DETAILS[order.paymentMethod].icon}
+          title={PAYMENT_METHOD_DETAILS[order.paymentMethod].title}
+          lines={[paymentStatusText(order)]}
+        />
+      </Card>
 
-        <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Payment</Text>
-        <Text style={styles.body}>
-          {PAYMENT_METHOD_DETAILS[order.paymentMethod].title} ·{' '}
-          {order.paymentStatus === 'paid'
-            ? 'Paid'
-            : order.paymentStatus === 'refunded'
-              ? 'Refunded'
-              : order.paymentMethod === 'cash'
-                ? 'Pay on delivery'
-                : order.paymentStatus === 'failed'
-                  ? 'Payment failed'
-                  : 'Awaiting payment'}
-        </Text>
-      </View>
-
-      {/* Actions */}
       {(order.status === 'delivered' || order.status === 'cancelled') && (
-        <TouchableOpacity style={styles.outlineButton} onPress={reorder} disabled={isReordering}>
-          {isReordering ? <ActivityIndicator color={Colors.light.primary} /> : <Text style={styles.outlineText}>Reorder</Text>}
-        </TouchableOpacity>
+        <Button title="Reorder" icon="repeat" variant="secondary" onPress={reorder} loading={isReordering} />
       )}
       {canCancel && (
-        <TouchableOpacity style={styles.cancelButton} onPress={confirmCancel} disabled={cancel.isPending}>
-          {cancel.isPending ? <ActivityIndicator color={Colors.light.danger} /> : <Text style={styles.cancelText}>Cancel Order</Text>}
-        </TouchableOpacity>
+        <Button title="Cancel order" variant="ghost" onPress={confirmCancel} loading={cancel.isPending} style={{ marginTop: -4 }} />
       )}
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#F7F7F7',
-  },
-  content: {
-    padding: 16,
-    gap: 16,
-    paddingBottom: 40,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  rowBetween: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 12,
-  },
-  orderNumber: {
-    fontSize: Typography.sizes.large,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-  },
-  meta: {
-    fontSize: 13,
-    color: '#888',
-    marginTop: 2,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: Typography.weights.bold,
-  },
-  progress: {
-    flexDirection: 'row',
-    marginTop: 16,
-  },
-  progressStep: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  progressDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#E5E5E5',
+function paymentStatusText(order: Order) {
+  if (order.paymentStatus === 'paid') return 'Paid';
+  if (order.paymentStatus === 'refunded') return 'Refunded';
+  if (order.paymentMethod === 'cash') return 'Pay your rider on delivery';
+  if (order.paymentStatus === 'failed') return 'Payment failed';
+  return 'Awaiting payment';
+}
+
+function Timeline({ order }: { order: Order }) {
+  const t = useTheme();
+  const styles = useStyles();
+  const current = STEPS.findIndex((s) => s.status === order.status);
+
+  return (
+    <Card>
+      {STEPS.map((step, i) => {
+        const done = i <= current;
+        const isCurrent = i === current;
+        const last = i === STEPS.length - 1;
+        return (
+          <View key={step.status} style={styles.step}>
+            <View style={styles.stepRail}>
+              <View style={[styles.stepDot, done && styles.stepDotDone, isCurrent && styles.stepDotCurrent]}>
+                <Ionicons name={done ? step.icon : 'ellipse'} size={done ? 14 : 6} color={done ? t.colors.textOnPrimary : t.colors.borderStrong} />
+              </View>
+              {!last && <View style={[styles.stepLine, i < current && styles.stepLineDone]} />}
+            </View>
+            <View style={[styles.stepText, last && { paddingBottom: 0 }]}>
+              <Text variant={isCurrent ? 'bodyStrong' : 'body'} tone={done ? 'default' : 'muted'}>
+                {step.label}
+              </Text>
+              {isCurrent && order.status !== 'delivered' && (
+                <Text variant="caption" tone="primary">
+                  In progress
+                </Text>
+              )}
+            </View>
+          </View>
+        );
+      })}
+    </Card>
+  );
+}
+
+function InfoLine({ icon, title, lines }: { icon: React.ComponentProps<typeof Ionicons>['name']; title: string; lines: string[] }) {
+  const t = useTheme();
+  const styles = useStyles();
+  return (
+    <View style={styles.infoLine}>
+      <View style={styles.infoIcon}>
+        <Ionicons name={icon} size={18} color={t.colors.primary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text variant="bodyStrong">{title}</Text>
+        {lines.filter(Boolean).map((line) => (
+          <Text key={line} variant="caption" tone="secondary">
+            {line}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const useStyles = makeStyles((t) => ({
+  screen: { flex: 1, backgroundColor: t.colors.background },
+  content: { padding: t.spacing.xl, paddingTop: t.spacing.sm, gap: t.spacing.lg, paddingBottom: 48 },
+  hero: { alignItems: 'center', paddingVertical: t.spacing.xxl },
+  heroIcon: { width: 68, height: 68, borderRadius: 34, alignItems: 'center', justifyContent: 'center' },
+  step: { flexDirection: 'row', gap: t.spacing.md },
+  stepRail: { alignItems: 'center', width: 28 },
+  stepDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: t.colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
   },
-  progressDotDone: {
-    backgroundColor: Colors.light.success,
-  },
-  progressLabel: {
-    fontSize: 11,
-    color: '#AAA',
-    textAlign: 'center',
-  },
-  progressLabelDone: {
-    color: Colors.light.text,
-    fontWeight: '600',
-  },
-  sectionTitle: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-    marginBottom: 10,
-  },
-  itemName: {
-    flex: 1,
-    fontSize: 15,
-    color: '#444',
-  },
-  label: {
-    fontSize: 15,
-    color: '#666',
-  },
-  value: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.light.text,
-  },
-  totalLabel: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-  },
-  totalValue: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.primary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#EEE',
-    marginVertical: 8,
-  },
-  body: {
-    fontSize: 15,
-    color: '#333',
-  },
-  primaryButton: {
-    backgroundColor: Colors.light.primary,
-    padding: 16,
-    borderRadius: 12,
+  stepDotDone: { backgroundColor: t.colors.success },
+  stepDotCurrent: { backgroundColor: t.colors.primary, borderWidth: 4, borderColor: t.colors.primarySoft, width: 32, height: 32, borderRadius: 16, marginHorizontal: -2 },
+  stepLine: { flex: 1, width: 2, minHeight: 18, backgroundColor: t.colors.border, marginVertical: 2 },
+  stepLineDone: { backgroundColor: t.colors.success },
+  stepText: { flex: 1, paddingTop: 4, paddingBottom: t.spacing.lg },
+  infoLine: { flexDirection: 'row', gap: t.spacing.md },
+  infoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: t.colors.primarySoft,
     alignItems: 'center',
-    marginTop: 16,
+    justifyContent: 'center',
   },
-  primaryText: {
-    color: 'white',
-    fontWeight: Typography.weights.bold,
-    fontSize: Typography.sizes.medium,
-  },
-  outlineButton: {
-    borderWidth: 1,
-    borderColor: Colors.light.primary,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  outlineText: {
-    color: Colors.light.primary,
-    fontWeight: Typography.weights.bold,
-    fontSize: Typography.sizes.medium,
-  },
-  cancelButton: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  cancelText: {
-    color: Colors.light.danger,
-    fontWeight: Typography.weights.bold,
-    fontSize: Typography.sizes.medium,
-  },
-});
+}));

@@ -21,6 +21,7 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
+temp_auto_push.bat
 # debug
 npm-debug.*
 yarn-debug.*
@@ -41,6 +42,8 @@ yarn-error.*
 /android
 
 # Supabase / app secrets
-.env
 supabase/.temp/
 supabase/.branches/
+.gitignore
+branch_structure.json
+config.bat

@@ -1,10 +1,25 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '../constants/Colors';
-import Typography from '../constants/Typography';
+import { PaymentMethod } from '../types';
+import { makeStyles, useTheme } from '../theme';
+import { Text } from '../ui';
 
-export type PaymentMethod = 'card' | 'cash' | 'transfer';
+export const PAYMENT_METHOD_DETAILS: Record<
+  PaymentMethod,
+  { title: string; icon: 'card' | 'cash'; description: string }
+> = {
+  paystack: {
+    title: 'Pay online',
+    icon: 'card',
+    description: 'Card, bank transfer or USSD · secured by Paystack',
+  },
+  cash: {
+    title: 'Cash on delivery',
+    icon: 'cash',
+    description: 'Pay your rider when the food arrives',
+  },
+};
 
 interface PaymentMethodCardProps {
   method: PaymentMethod;
@@ -13,104 +28,54 @@ interface PaymentMethodCardProps {
 }
 
 export default function PaymentMethodCard({ method, isSelected, onSelect }: PaymentMethodCardProps) {
-
-  const getMethodDetails = () => {
-    if (method === 'card') {
-      return {
-        title: 'Credit/Debit Card',
-        icon: 'card-outline' as const,
-        description: 'Pay securely with your bank card',
-      };
-    }
-    if (method === 'transfer') {
-      return {
-        title: 'Transfer',
-        icon: 'business-outline' as const,
-        description: 'Pay with mobile banking or USSD',
-      };
-    }
-    return {
-      title: 'Cash on Delivery',
-      icon: 'cash-outline' as const,
-      description: 'Pay in cash when your order arrives',
-    };
-  };
-
-  const details = getMethodDetails();
+  const t = useTheme();
+  const styles = useStyles();
+  const details = PAYMENT_METHOD_DETAILS[method];
 
   return (
-    <TouchableOpacity
-      style={[styles.card, isSelected && styles.cardSelected]}
+    <Pressable
       onPress={() => onSelect(method)}
-      activeOpacity={0.7}
+      accessibilityRole="radio"
+      accessibilityState={{ selected: isSelected }}
+      style={({ pressed }) => [styles.card, isSelected && styles.selected, pressed && { opacity: 0.85 }]}
     >
-      <View style={[styles.iconContainer, isSelected && styles.iconContainerSelected]}>
-        <Ionicons
-          name={details.icon}
-          size={24}
-          color={isSelected ? Colors.light.primary : '#666'}
-        />
+      <View style={[styles.icon, isSelected && { backgroundColor: t.colors.primary }]}>
+        <Ionicons name={details.icon} size={20} color={isSelected ? t.colors.textOnPrimary : t.colors.primary} />
       </View>
-      <View style={styles.textContainer}>
-        <Text style={[styles.title, isSelected && styles.titleSelected]}>
-          {details.title}
+      <View style={{ flex: 1 }}>
+        <Text variant="bodyStrong">{details.title}</Text>
+        <Text variant="caption" tone="secondary">
+          {details.description}
         </Text>
-        <Text style={styles.description}>{details.description}</Text>
       </View>
-
-      {/* Radio Button Indicator */}
-      <View style={styles.radioContainer}>
-        {isSelected ? (
-          <Ionicons name="radio-button-on" size={24} color={Colors.light.primary} />
-        ) : (
-          <Ionicons name="radio-button-off" size={24} color="#CCC" />
-        )}
-      </View>
-    </TouchableOpacity>
+      <Ionicons
+        name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+        size={24}
+        color={isSelected ? t.colors.primary : t.colors.borderStrong}
+      />
+    </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#EAEAEA',
-    marginBottom: 12,
+    gap: t.spacing.md,
+    padding: t.spacing.lg,
+    borderRadius: t.radius.lg,
+    backgroundColor: t.colors.surface,
+    borderWidth: 1.5,
+    borderColor: t.colors.border,
+    marginBottom: t.spacing.md,
   },
-  cardSelected: {
-    borderColor: Colors.light.primary,
-    backgroundColor: '#FFF5F3', // Very light tint of tomato
+  selected: { borderColor: t.colors.primary, backgroundColor: t.colors.primarySoft },
+  icon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: t.colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  iconContainer: {
-    backgroundColor: '#F5F5F5',
-    padding: 10,
-    borderRadius: 12,
-    marginRight: 16,
-  },
-  iconContainerSelected: {
-    backgroundColor: 'rgba(255, 99, 71, 0.1)',
-  },
-  textContainer: {
-    flex: 1,
-  },
-  title: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-    marginBottom: 4,
-  },
-  titleSelected: {
-    color: Colors.light.primary,
-  },
-  description: {
-    fontSize: Typography.sizes.small,
-    color: '#888',
-  },
-  radioContainer: {
-    marginLeft: 12,
-  },
-});
+}));

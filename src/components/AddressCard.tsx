@@ -1,73 +1,91 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '../constants/Colors';
-import Typography from '../constants/Typography';
+import { Address } from '../types';
+import { makeStyles, useTheme } from '../theme';
+import { Pill, Text } from '../ui';
 
 interface AddressCardProps {
-  address: string;
-  name: string;
+  address: Address;
+  /** When defined, the card acts as a radio option. */
+  isSelected?: boolean;
+  onPress?: () => void;
+  /** Optional trailing action, e.g. "Edit". */
+  actionIcon?: React.ComponentProps<typeof Ionicons>['name'];
+  onAction?: () => void;
 }
 
-export default function AddressCard({ address, name }: AddressCardProps) {
+const LABEL_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
+  home: 'home',
+  work: 'briefcase',
+  office: 'briefcase',
+};
+
+export default function AddressCard({ address, isSelected, onPress, actionIcon, onAction }: AddressCardProps) {
+  const t = useTheme();
+  const styles = useStyles();
+  const selectable = isSelected !== undefined;
+  const icon = LABEL_ICONS[address.label.trim().toLowerCase()] ?? 'location';
+
   return (
-    <View style={styles.card}>
-      <View style={styles.iconContainer}>
-        <Ionicons name="location" size={24} color={Colors.light.primary} />
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={selectable ? 'radio' : 'button'}
+      accessibilityState={selectable ? { selected: !!isSelected } : undefined}
+      style={({ pressed }) => [styles.card, isSelected && styles.selected, pressed && { opacity: 0.85 }]}
+    >
+      <View style={[styles.icon, isSelected && { backgroundColor: t.colors.primary }]}>
+        <Ionicons name={icon} size={18} color={isSelected ? t.colors.textOnPrimary : t.colors.primary} />
       </View>
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>Delivery Address</Text>
-        <Text style={styles.addressText}>{address}</Text>
-        <Text style={styles.nameText}>{name}</Text>
+      <View style={{ flex: 1, gap: 2 }}>
+        <View style={styles.labelRow}>
+          <Text variant="bodyStrong">{address.label}</Text>
+          {address.isDefault && <Pill label="Default" color={t.colors.success} background={t.colors.successSoft} />}
+        </View>
+        <Text tone="secondary" numberOfLines={2}>
+          {address.line1}, {address.city}, {address.state}
+        </Text>
+        <Text variant="caption" tone="muted">
+          {address.phone}
+        </Text>
       </View>
-      <TouchableOpacity style={styles.changeButton}>
-        <Text style={styles.changeText}>Change</Text>
-      </TouchableOpacity>
-    </View>
+      {onAction && actionIcon ? (
+        <Pressable onPress={onAction} hitSlop={10} accessibilityLabel="Address options" style={styles.action}>
+          <Ionicons name={actionIcon} size={20} color={t.colors.textSecondary} />
+        </Pressable>
+      ) : selectable ? (
+        <Ionicons
+          name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+          size={24}
+          color={isSelected ? t.colors.primary : t.colors.borderStrong}
+        />
+      ) : null}
+    </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   card: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#F9F9F9',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#EAEAEA',
+    alignItems: 'center',
+    gap: t.spacing.md,
+    padding: t.spacing.lg,
+    borderRadius: t.radius.lg,
+    backgroundColor: t.colors.surface,
+    borderWidth: 1.5,
+    borderColor: t.colors.border,
+    marginBottom: t.spacing.md,
   },
-  iconContainer: {
-    backgroundColor: 'rgba(255, 99, 71, 0.1)', // Light tint of primary color
-    padding: 10,
-    borderRadius: 12,
-    marginRight: 16,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  title: {
-    fontSize: Typography.sizes.small,
-    color: '#888',
-    marginBottom: 4,
-  },
-  addressText: {
-    fontSize: Typography.sizes.medium,
-    fontWeight: Typography.weights.bold,
-    color: Colors.light.text,
-    marginBottom: 4,
-  },
-  nameText: {
-    fontSize: Typography.sizes.small,
-    color: '#666',
-  },
-  changeButton: {
+  selected: { borderColor: t.colors.primary, backgroundColor: t.colors.primarySoft },
+  icon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: t.colors.primarySoft,
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
   },
-  changeText: {
-    color: Colors.light.primary,
-    fontWeight: Typography.weights.bold,
-    fontSize: Typography.sizes.small,
-  },
-});
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: t.spacing.sm },
+  action: { padding: 4 },
+}));

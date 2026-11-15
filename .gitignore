@@ -53,3 +53,8 @@ config.bat
 .env.*
 !.env.example
 env.txt
+
+# landing site (Next.js) build output
+landing/.next/
+landing/out/
+landing/node_modules/

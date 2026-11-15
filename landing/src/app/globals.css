@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-ui: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme {
+  /* Cravely brand */
+  --color-coral: #ff5a5f;
+  --color-coral-deep: #e8474c;
+  --color-coral-soft: #ffe6e3;
+  --color-navy: #131929;
+  --color-navy-600: #1d2540;
+  --color-cream: #fff8f4;
+  --color-peach: #fff0e8;
+  --color-peach-2: #fbe9df;
+  --color-ink: #1f1512;
+  --color-mute: #6b5a53;
+  --color-faint: #a08f87;
+  --color-line: #f2e3da;
+  --color-line-strong: #e6d2c6;
+  --color-mint: #16a34a;
+  --color-mint-soft: #dcfce7;
+  --color-sky: #2563eb;
+  --color-sky-soft: #dbeafe;
+  --color-sun: #f5a524;
+
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-bob: bob 6s ease-in-out infinite;
+  --animate-ping-soft: ping-soft 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-shimmer: shimmer 3.2s ease-in-out infinite;
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-marquee-rev: marquee-rev 46s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+
+  @keyframes bob {
+    0%, 100% { transform: translate3d(0, -5px, 0); }
+    50% { transform: translate3d(0, 5px, 0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translate3d(0, -8px, 0) rotate(-2deg); }
+    50% { transform: translate3d(0, 8px, 0) rotate(2deg); }
+  }
+  @keyframes ping-soft {
+    0% { transform: scale(1); opacity: 0.55; }
+    80%, 100% { transform: scale(2.6); opacity: 0; }
+  }
+  @keyframes shimmer {
+    0%, 55% { transform: translateX(-120%); }
+    100% { transform: translateX(220%); }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes marquee-rev {
+    from { transform: translateX(-50%); }
+    to { transform: translateX(0); }
+  }
+}
+
+html {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  -webkit-tap-highlight-color: transparent;
+  scroll-padding-top: 88px;
+}
+
+body {
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--color-coral);
+  color: #fff;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+@utility container-page {
+  width: 100%;
+  max-width: 1232px;
+  margin-inline: auto;
+  padding-inline: 20px;
+  @media (min-width: 768px) {
+    padding-inline: 24px;
+  }
+}
+
+@utility display {
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+}
+
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 3px;
+  }
+}
+
+/* phone frame used by the hero and the tracking section */
+@utility phone-frame {
+  position: relative;
+  width: 300px;
+  aspect-ratio: 9 / 19.2;
+  border-radius: 48px;
+  background: var(--color-navy);
+  padding: 10px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 40px 80px -30px rgba(31, 21, 18, 0.45),
+    0 20px 40px -20px rgba(255, 90, 95, 0.35);
+}
+@utility phone-screen {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 40px;
+  background: var(--color-cream);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

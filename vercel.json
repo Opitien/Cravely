@@ -1,9 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "cleanUrls": true,
-  "rewrites": [
-    { "source": "/restaurant/:id", "destination": "/restaurant/[id]" },
-    { "source": "/orders/:id", "destination": "/orders/[id]" }
-  ]
+  "buildCommand": "npm run build:landing",
+  "outputDirectory": "landing/out",
+  "framework": null,
+  "cleanUrls": true
 }

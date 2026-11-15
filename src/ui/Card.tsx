@@ -1,43 +1,45 @@
 import React from 'react';
-import { Pressable, StyleProp, View, ViewProps, ViewStyle } from 'react-native';
+import { StyleProp, View, ViewProps, ViewStyle } from 'react-native';
+import { MotiView } from 'moti';
 import { makeStyles } from '../theme';
+import { Pressable } from './Pressable';
+import { enter, useReduceMotion } from './motion';
 
 interface CardProps extends ViewProps {
   onPress?: () => void;
   padded?: boolean;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
+  /** Animate in with the standard fade + rise; `index` staggers lists. */
+  animated?: boolean;
+  index?: number;
 }
 
-export function Card({ onPress, padded = true, style, children, accessibilityLabel, ...rest }: CardProps) {
+/** Grouped-background card: secondarySystemGroupedBackground, 14pt corners, soft elevation. */
+export function Card({ onPress, padded = true, style, children, accessibilityLabel, animated, index = 0, ...rest }: CardProps) {
   const styles = useStyles();
+  const reduce = useReduceMotion();
   const cardStyle = [styles.card, padded && styles.padded, style];
 
-  if (onPress) {
-    return (
-      <Pressable
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        style={({ pressed }) => [cardStyle, pressed && styles.pressed]}
-      >
-        {children}
-      </Pressable>
-    );
-  }
-  return (
+  const body = onPress ? (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel} pressScale={0.985} style={cardStyle}>
+      {children}
+    </Pressable>
+  ) : (
     <View style={cardStyle} {...rest}>
       {children}
     </View>
   );
+
+  if (!animated) return body;
+  return <MotiView {...enter(index, reduce)}>{body}</MotiView>;
 }
 
 const useStyles = makeStyles((t) => ({
   card: {
-    backgroundColor: t.colors.surface,
-    borderRadius: t.radius.xl,
+    backgroundColor: t.colors.secondaryGroupedBackground,
+    borderRadius: t.radius.lg,
     ...t.shadow(1),
   },
   padded: { padding: t.spacing.lg },
-  pressed: { opacity: 0.92, transform: [{ scale: 0.99 }] },
 }));

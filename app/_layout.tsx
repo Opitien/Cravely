@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Image, ActivityIndicator } from 'react-native';
+import { View, Image, ActivityIndicator, Platform } from 'react-native';
 import { Stack, useRouter, ErrorBoundaryProps, ThemeProvider, DarkTheme, DefaultTheme } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -104,12 +104,15 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   return (
     <Stack
       screenOptions={{
-        headerTintColor: t.colors.text,
-        headerTitleStyle: { fontFamily: t.fonts.bold, fontSize: 17 },
+        // iOS: translucent system-material header; Android/web: flat grouped background.
+        headerTintColor: t.colors.primary,
+        headerTitleStyle: { ...t.type.headline, color: t.colors.label },
+        headerLargeTitleStyle: { ...t.type.largeTitle, color: t.colors.label },
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: t.colors.background },
+        headerStyle: { backgroundColor: t.colors.groupedBackground },
         headerBackButtonDisplayMode: 'minimal',
-        contentStyle: { backgroundColor: t.colors.background },
+        contentStyle: { backgroundColor: t.colors.groupedBackground },
+        animation: Platform.OS === 'ios' ? 'default' : 'slide_from_right',
       }}
     >
       {/* Signed-in area. If the session disappears, expo-router redirects to the auth screens. */}

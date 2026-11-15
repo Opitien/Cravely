@@ -49,7 +49,7 @@ export default function FavoritesScreen() {
       <FlatList
         data={saved}
         keyExtractor={(r) => r.id}
-        renderItem={({ item }) => <RestaurantCard restaurant={item} onPress={() => router.push(`/restaurant/${item.id}`)} />}
+        renderItem={({ item, index }) => <RestaurantCard restaurant={item} index={index} onPress={() => router.push(`/restaurant/${item.id}`)} />}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />

@@ -76,7 +76,7 @@ export default function CartScreen() {
 
         <Card style={styles.items}>
           {items.map((item, i) => (
-            <CartItemCard key={item.menuItemId} item={item} last={i === items.length - 1} />
+            <CartItemCard key={item.menuItemId} item={item} index={i} last={i === items.length - 1} />
           ))}
         </Card>
 

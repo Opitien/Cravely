@@ -69,7 +69,7 @@ export default function HomeScreen() {
         />
       );
     }
-    return list.map((r) => <RestaurantCard key={r.id} restaurant={r} onPress={() => open(r.id)} />);
+    return list.map((r, i) => <RestaurantCard key={r.id} restaurant={r} index={i} onPress={() => open(r.id)} />);
   };
 
   return (
@@ -120,7 +120,7 @@ export default function HomeScreen() {
 }
 
 const useStyles = makeStyles((t) => ({
-  content: { paddingBottom: 110 },
+  content: { paddingBottom: 170 },
   section: { marginTop: t.spacing.sm },
   carousel: { paddingHorizontal: t.spacing.xl, gap: t.spacing.lg, paddingBottom: t.spacing.xxl },
   inlineState: { flex: 0, paddingVertical: t.spacing.xxxl },

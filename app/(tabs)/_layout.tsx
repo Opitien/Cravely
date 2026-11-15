@@ -1,35 +1,61 @@
-import React from 'react';
-import { ColorValue } from 'react-native';
+import React, { useEffect } from 'react';
+import { ColorValue, Platform, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useCart } from '../../src/context/CartContext';
 import { useTheme } from '../../src/theme';
+import { Icon, IconName, useReduceMotion } from '../../src/ui';
 
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
+/** Tab icon that pops when it becomes selected (SF Symbol bounce on iOS, spring scale elsewhere). */
+function TabIcon({ active, inactive, color, focused }: { active: IconName; inactive: IconName; color: ColorValue; focused: boolean }) {
+  const reduce = useReduceMotion();
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    if (!focused || reduce) return;
+    scale.value = withSequence(withTiming(0.85, { duration: 70 }), withSpring(1, { damping: 9, stiffness: 260 }));
+  }, [focused, reduce, scale]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Animated.View style={style}>
+      <Icon name={focused ? active : inactive} size={26} color={String(color)} animation={focused ? 'bounce' : 'none'} animationKey={focused} />
+    </Animated.View>
+  );
+}
 
 const tabIcon =
   (active: IconName, inactive: IconName) =>
-  ({ color, focused }: { color: ColorValue; focused: boolean }) => (
-    <Ionicons name={focused ? active : inactive} size={24} color={color} />
-  );
+  ({ color, focused }: { color: ColorValue; focused: boolean }) => <TabIcon active={active} inactive={inactive} color={color} focused={focused} />;
 
 export default function TabLayout() {
   const t = useTheme();
   const { totalItems } = useCart();
+  const translucent = Platform.OS !== 'web';
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: t.colors.primary,
-        tabBarInactiveTintColor: t.colors.textMuted,
+        tabBarInactiveTintColor: t.colors.systemGray,
         tabBarStyle: {
-          backgroundColor: t.colors.tabBar,
-          borderTopColor: t.colors.border,
-          paddingTop: 4,
+          backgroundColor: translucent ? 'transparent' : t.colors.tabBar,
+          borderTopWidth: t.hairline,
+          borderTopColor: t.colors.separator,
+          elevation: 0,
         },
-        tabBarLabelStyle: { fontFamily: t.fonts.semibold, fontSize: 11 },
-        tabBarBadgeStyle: { backgroundColor: t.colors.primary, fontFamily: t.fonts.bold, fontSize: 11 },
+        tabBarBackground: translucent
+          ? () => (
+              <BlurView
+                intensity={90}
+                tint={t.dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight'}
+                style={StyleSheet.absoluteFill}
+              />
+            )
+          : undefined,
+        tabBarLabelStyle: { ...t.type.caption2, ...t.weight.medium },
+        tabBarBadgeStyle: { backgroundColor: t.colors.primary, ...t.type.caption2, ...t.weight.semibold, color: '#FFF' },
+        sceneStyle: { backgroundColor: t.colors.groupedBackground },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: tabIcon('home', 'home-outline') }} />

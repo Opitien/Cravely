@@ -1,19 +1,21 @@
 import React from 'react';
-import { ActivityIndicator, StyleProp, View, ViewStyle } from 'react-native';
-import { makeStyles, useTheme } from '../theme';
+import { StyleProp, View, ViewStyle } from 'react-native';
+import { MotiView } from 'moti';
+import { makeStyles } from '../theme';
 import { Text } from './Text';
 import { Button } from './Button';
+import { LottieIcon } from './LottieIcon';
+import { enter, useReduceMotion } from './motion';
 
 // Full-area states so every screen handles loading / error / empty the same way.
 
 export function LoadingState({ message, style }: { message?: string; style?: StyleProp<ViewStyle> }) {
-  const t = useTheme();
   const styles = useStyles();
   return (
     <View style={[styles.container, style]}>
-      <ActivityIndicator size="large" color={t.colors.primary} />
+      <LottieIcon name="loader" size={72} />
       {message ? (
-        <Text tone="secondary" center style={{ marginTop: 16 }}>
+        <Text tone="secondary" center style={{ marginTop: 8 }}>
           {message}
         </Text>
       ) : null}
@@ -37,20 +39,32 @@ export function EmptyState({
   style?: StyleProp<ViewStyle>;
 }) {
   const styles = useStyles();
+  const reduce = useReduceMotion();
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.emojiCircle}>
+      <MotiView
+        from={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', damping: 10, stiffness: 180 }}
+        style={styles.emojiCircle}
+      >
         <Text style={styles.emoji}>{emoji}</Text>
-      </View>
-      <Text variant="heading" center>
-        {title}
-      </Text>
-      {subtitle ? (
-        <Text tone="secondary" center style={styles.subtitle}>
-          {subtitle}
+      </MotiView>
+      <MotiView {...enter(1, reduce)} style={{ alignItems: 'center' }}>
+        <Text variant="title2" center>
+          {title}
         </Text>
+        {subtitle ? (
+          <Text variant="subheadline" tone="secondary" center style={styles.subtitle}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </MotiView>
+      {actionLabel && onAction ? (
+        <MotiView {...enter(2, reduce)} style={styles.action}>
+          <Button title={actionLabel} onPress={onAction} />
+        </MotiView>
       ) : null}
-      {actionLabel && onAction ? <Button title={actionLabel} onPress={onAction} style={styles.action} /> : null}
     </View>
   );
 }
@@ -83,16 +97,17 @@ const useStyles = makeStyles((t) => ({
     justifyContent: 'center',
     paddingHorizontal: t.spacing.xxxl,
     paddingVertical: 48,
-    backgroundColor: t.colors.background,
+    backgroundColor: t.colors.groupedBackground,
   },
   emojiCircle: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: t.colors.surfaceMuted,
+    backgroundColor: t.colors.secondaryGroupedBackground,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: t.spacing.xl,
+    ...t.shadow(1),
   },
   emoji: { fontSize: 44, lineHeight: 52 },
   subtitle: { marginTop: t.spacing.sm, maxWidth: 300 },

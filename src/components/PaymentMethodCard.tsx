@@ -1,9 +1,10 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { MotiView } from 'moti';
 import { PaymentMethod } from '../types';
 import { makeStyles, useTheme } from '../theme';
-import { Text } from '../ui';
+import { Icon, Pressable, Text } from '../ui';
 
 export const PAYMENT_METHOD_DETAILS: Record<
   PaymentMethod,
@@ -27,6 +28,7 @@ interface PaymentMethodCardProps {
   onSelect: (method: PaymentMethod) => void;
 }
 
+/** Radio-style grouped row with an animated tinted selection ring. */
 export default function PaymentMethodCard({ method, isSelected, onSelect }: PaymentMethodCardProps) {
   const t = useTheme();
   const styles = useStyles();
@@ -34,25 +36,36 @@ export default function PaymentMethodCard({ method, isSelected, onSelect }: Paym
 
   return (
     <Pressable
-      onPress={() => onSelect(method)}
+      onPress={() => {
+        Haptics.selectionAsync().catch(() => undefined);
+        onSelect(method);
+      }}
       accessibilityRole="radio"
       accessibilityState={{ selected: isSelected }}
-      style={({ pressed }) => [styles.card, isSelected && styles.selected, pressed && { opacity: 0.85 }]}
+      pressScale={0.985}
     >
-      <View style={[styles.icon, isSelected && { backgroundColor: t.colors.primary }]}>
-        <Ionicons name={details.icon} size={20} color={isSelected ? t.colors.textOnPrimary : t.colors.primary} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text variant="bodyStrong">{details.title}</Text>
-        <Text variant="caption" tone="secondary">
-          {details.description}
-        </Text>
-      </View>
-      <Ionicons
-        name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
-        size={24}
-        color={isSelected ? t.colors.primary : t.colors.borderStrong}
-      />
+      <MotiView
+        animate={{ borderColor: isSelected ? t.colors.primary : 'rgba(0,0,0,0)', backgroundColor: isSelected ? t.colors.primarySoft : t.colors.secondaryGroupedBackground }}
+        transition={{ type: 'timing', duration: 160 }}
+        style={styles.card}
+      >
+        <MotiView animate={{ backgroundColor: isSelected ? t.colors.primary : t.colors.primarySoft }} transition={{ type: 'timing', duration: 160 }} style={styles.icon}>
+          <Icon name={details.icon} size={18} color={isSelected ? t.colors.textOnPrimary : t.colors.primary} weight="semibold" />
+        </MotiView>
+        <View style={{ flex: 1 }}>
+          <Text variant="headline">{details.title}</Text>
+          <Text variant="footnote" tone="secondary">
+            {details.description}
+          </Text>
+        </View>
+        <Icon
+          name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+          size={24}
+          color={isSelected ? t.colors.primary : t.colors.tertiaryLabel}
+          animation="bounce"
+          animationKey={isSelected}
+        />
+      </MotiView>
     </Pressable>
   );
 }
@@ -64,17 +77,14 @@ const useStyles = makeStyles((t) => ({
     gap: t.spacing.md,
     padding: t.spacing.lg,
     borderRadius: t.radius.lg,
-    backgroundColor: t.colors.surface,
     borderWidth: 1.5,
-    borderColor: t.colors.border,
     marginBottom: t.spacing.md,
+    ...t.shadow(1),
   },
-  selected: { borderColor: t.colors.primary, backgroundColor: t.colors.primarySoft },
   icon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: t.colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

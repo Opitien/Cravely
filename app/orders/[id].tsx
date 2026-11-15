@@ -3,6 +3,7 @@ import { Alert, RefreshControl, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
+import { MotiView } from 'moti';
 import { queryKeys, useCancelOrder, useOrder, useRestaurant } from '../../src/hooks/queries';
 import { getRestaurantById } from '../../src/services/api';
 import AppMap, { MapMarker } from '../../src/components/map/AppMap';
@@ -243,6 +244,14 @@ function Timeline({ order }: { order: Order }) {
         return (
           <View key={step.status} style={styles.step}>
             <View style={styles.stepRail}>
+              {isCurrent && order.status !== 'delivered' && (
+                <MotiView
+                  from={{ scale: 1, opacity: 0.6 }}
+                  animate={{ scale: 1.9, opacity: 0 }}
+                  transition={{ type: 'timing', duration: 1400, loop: true, repeatReverse: false }}
+                  style={styles.stepPulse}
+                />
+              )}
               <View style={[styles.stepDot, done && styles.stepDotDone, isCurrent && styles.stepDotCurrent]}>
                 <Ionicons name={done ? step.icon : 'ellipse'} size={done ? 14 : 6} color={done ? t.colors.textOnPrimary : t.colors.borderStrong} />
               </View>
@@ -301,6 +310,7 @@ const useStyles = makeStyles((t) => ({
     justifyContent: 'center',
   },
   stepDotDone: { backgroundColor: t.colors.success },
+  stepPulse: { position: 'absolute', top: 2, width: 28, height: 28, borderRadius: 14, backgroundColor: t.colors.primary },
   stepDotCurrent: { backgroundColor: t.colors.primary, borderWidth: 4, borderColor: t.colors.primarySoft, width: 32, height: 32, borderRadius: 16, marginHorizontal: -2 },
   stepLine: { flex: 1, width: 2, minHeight: 18, backgroundColor: t.colors.border, marginVertical: 2 },
   stepLineDone: { backgroundColor: t.colors.success },

@@ -11,10 +11,11 @@ import { deleteAccount } from '../../src/services/api';
 import { avatarUrlFor } from '../../src/components/HomeHeader';
 import Links from '../../src/constants/Links';
 import { getErrorMessage } from '../../src/lib/format';
-import { makeStyles } from '../../src/theme';
-import { Button, Card, ListRow, Text } from '../../src/ui';
+import { makeStyles, useTheme } from '../../src/theme';
+import { Button, Card, GroupLabel, ListGroup, ListRow, Text } from '../../src/ui';
 
 export default function UserProfileScreen() {
+  const t = useTheme();
   const styles = useStyles();
   const router = useRouter();
   const { user, signOut } = useAuth();
@@ -99,41 +100,38 @@ export default function UserProfileScreen() {
         ))}
       </Card>
 
-      <Text variant="overline" tone="muted" style={styles.group}>
-        Account
-      </Text>
-      <Card padded={false} style={styles.list}>
+      <GroupLabel style={styles.group}>Account</GroupLabel>
+      <ListGroup>
         <ListRow
-          icon="location-outline"
+          icon="location"
+          iconColor={t.colors.systemBlue}
           title="Delivery addresses"
           value={defaultAddress?.city}
           onPress={() => router.push('/user-profile/addresses')}
         />
-        <ListRow icon="receipt-outline" title="Order history" onPress={() => router.navigate('/orders')} />
-        <ListRow icon="lock-closed-outline" title="Change password" onPress={() => router.push('/user-profile/change-password')} last />
-      </Card>
+        <ListRow icon="receipt" iconColor={t.colors.systemOrange} title="Order history" onPress={() => router.navigate('/orders')} />
+        <ListRow icon="lock-closed" iconColor={t.colors.systemGray} title="Change password" onPress={() => router.push('/user-profile/change-password')} last />
+      </ListGroup>
 
-      <Text variant="overline" tone="muted" style={styles.group}>
-        Support
-      </Text>
-      <Card padded={false} style={styles.list}>
-        <ListRow icon="help-circle-outline" title="Help & support" onPress={() => Linking.openURL(`mailto:${Links.supportEmail}`)} />
-        <ListRow icon="shield-checkmark-outline" title="Privacy policy" onPress={() => WebBrowser.openBrowserAsync(Links.privacyPolicy)} />
-        <ListRow icon="document-text-outline" title="Terms of service" onPress={() => WebBrowser.openBrowserAsync(Links.terms)} last />
-      </Card>
+      <GroupLabel style={styles.group}>Support</GroupLabel>
+      <ListGroup>
+        <ListRow icon="help-circle-outline" iconColor={t.colors.systemGreen} title="Help & support" onPress={() => Linking.openURL(`mailto:${Links.supportEmail}`)} />
+        <ListRow icon="shield-checkmark-outline" iconColor={t.colors.systemPurple} title="Privacy policy" onPress={() => WebBrowser.openBrowserAsync(Links.privacyPolicy)} />
+        <ListRow icon="document-text-outline" iconColor={t.colors.systemGray} title="Terms of service" onPress={() => WebBrowser.openBrowserAsync(Links.terms)} last />
+      </ListGroup>
 
-      <Card padded={false} style={[styles.list, { marginTop: 24 }]}>
+      <ListGroup style={{ marginTop: 24 }}>
         <ListRow icon="log-out-outline" title="Log out" onPress={handleLogout} destructive />
         <ListRow
-          icon="trash-outline"
+          icon="trash"
           title={removeAccount.isPending ? 'Deleting account…' : 'Delete account'}
           onPress={removeAccount.isPending ? undefined : handleDeleteAccount}
           destructive
           last
         />
-      </Card>
+      </ListGroup>
 
-      <Text variant="caption" tone="muted" center style={{ marginTop: 28 }}>
+      <Text variant="footnote" tone="tertiary" center style={{ marginTop: 28 }}>
         Cravely v{Constants.expoConfig?.version ?? '1.0.0'}
       </Text>
     </ScrollView>

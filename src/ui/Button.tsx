@@ -1,11 +1,11 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleProp, View, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { ActivityIndicator, StyleProp, View, ViewStyle } from 'react-native';
 import { makeStyles, useTheme } from '../theme';
+import { Icon, IconName } from './Icon';
+import { Pressable } from './Pressable';
 import { Text } from './Text';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 interface ButtonProps {
   title: string;
@@ -20,17 +20,8 @@ interface ButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function Button({
-  title,
-  onPress,
-  variant = 'primary',
-  size = 'lg',
-  icon,
-  trailing,
-  loading,
-  disabled,
-  style,
-}: ButtonProps) {
+/** iOS-style filled / tinted / plain buttons (50pt tall, 14pt corners). */
+export function Button({ title, onPress, variant = 'primary', size = 'lg', icon, trailing, loading, disabled, style }: ButtonProps) {
   const t = useTheme();
   const styles = useStyles();
   const isDisabled = disabled || loading;
@@ -40,35 +31,30 @@ export function Button({
       ? t.colors.textOnPrimary
       : variant === 'secondary'
         ? t.colors.primary
-        : t.colors.text;
+        : t.colors.primary;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={isDisabled}
+      feedback={variant === 'ghost' ? 'opacity' : 'scale'}
+      pressScale={0.98}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!isDisabled, busy: !!loading }}
-      style={({ pressed }) => [
-        styles.base,
-        size === 'lg' ? styles.lg : styles.md,
-        styles[variant],
-        pressed && !isDisabled && (variant === 'primary' ? styles.primaryPressed : styles.pressed),
-        isDisabled && styles.disabled,
-        style,
-      ]}
+      style={[styles.base, size === 'lg' ? styles.lg : styles.md, styles[variant], isDisabled && styles.disabled, style]}
     >
       {loading ? (
         <ActivityIndicator color={fg} />
       ) : (
         <View style={styles.content}>
-          {icon && <Ionicons name={icon} size={size === 'lg' ? 20 : 18} color={fg} />}
-          <Text variant={size === 'lg' ? 'subheading' : 'label'} style={{ color: fg, flexShrink: 1 }} numberOfLines={1}>
+          {icon && <Icon name={icon} size={size === 'lg' ? 20 : 18} color={fg} weight="semibold" />}
+          <Text variant={size === 'lg' ? 'headline' : 'subheadlineStrong'} style={{ color: fg, flexShrink: 1 }} numberOfLines={1}>
             {title}
           </Text>
           {trailing ? (
             <>
               <View style={{ flex: 1 }} />
-              <Text variant="subheading" style={{ color: fg }}>
+              <Text variant="headline" style={{ color: fg }}>
                 {trailing}
               </Text>
             </>
@@ -86,8 +72,8 @@ const useStyles = makeStyles((t) => ({
     justifyContent: 'center',
     paddingHorizontal: t.spacing.xl,
   },
-  lg: { minHeight: 56 },
-  md: { minHeight: 44, borderRadius: t.radius.md, paddingHorizontal: t.spacing.lg },
+  lg: { minHeight: 50 },
+  md: { minHeight: 40, borderRadius: t.radius.md, paddingHorizontal: t.spacing.lg },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -96,10 +82,8 @@ const useStyles = makeStyles((t) => ({
     justifyContent: 'center',
   },
   primary: { backgroundColor: t.colors.primary },
-  primaryPressed: { backgroundColor: t.colors.primaryPressed },
   secondary: { backgroundColor: t.colors.primarySoft },
   ghost: { backgroundColor: 'transparent' },
   danger: { backgroundColor: t.colors.danger },
-  pressed: { opacity: 0.75 },
-  disabled: { opacity: 0.5 },
+  disabled: { opacity: 0.4 },
 }));

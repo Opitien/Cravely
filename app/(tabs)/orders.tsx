@@ -57,7 +57,7 @@ export default function OrdersScreen() {
             {section.title}
           </Text>
         )}
-        renderItem={({ item }) => <OrderCard order={item} onPress={() => router.push(`/orders/${item.id}`)} />}
+        renderItem={({ item, index }) => <OrderCard order={item} index={index} onPress={() => router.push(`/orders/${item.id}`)} />}
         ItemSeparatorComponent={() => <View style={{ height: t.spacing.md }} />}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={t.colors.primary} colors={[t.colors.primary]} />
@@ -75,6 +75,6 @@ export default function OrdersScreen() {
 }
 
 const useStyles = makeStyles((t) => ({
-  list: { paddingHorizontal: t.spacing.xl, paddingBottom: t.spacing.xxxl },
+  list: { paddingHorizontal: t.spacing.lg, paddingBottom: 120 },
   sectionTitle: { marginTop: t.spacing.sm, marginBottom: t.spacing.md },
 }));

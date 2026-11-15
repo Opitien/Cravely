@@ -1,10 +1,9 @@
 import React, { forwardRef, useState } from 'react';
 import { Pressable, TextInput, TextInputProps, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { AnimatePresence, MotiView } from 'moti';
 import { makeStyles, useTheme } from '../theme';
+import { Icon, IconName } from './Icon';
 import { Text } from './Text';
-
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 interface TextFieldProps extends TextInputProps {
   label?: string;
@@ -15,6 +14,7 @@ interface TextFieldProps extends TextInputProps {
   password?: boolean;
 }
 
+/** iOS inset text field: tertiary fill, 10pt corners, tint ring on focus, animated helper text. */
 export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
   { label, icon, error, hint, password, multiline, style, onFocus, onBlur, ...rest },
   ref
@@ -27,23 +27,17 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
   return (
     <View style={styles.wrapper}>
       {label ? (
-        <Text variant="label" tone="secondary" style={styles.label}>
+        <Text variant="footnoteStrong" tone="secondary" style={styles.label}>
           {label}
         </Text>
       ) : null}
-      <View
-        style={[
-          styles.field,
-          multiline && styles.multiline,
-          focused && styles.focused,
-          error ? styles.errored : null,
-        ]}
-      >
-        {icon && <Ionicons name={icon} size={20} color={focused ? t.colors.primary : t.colors.textMuted} />}
+      <View style={[styles.field, multiline && styles.multiline, focused && styles.focused, error ? styles.errored : null]}>
+        {icon && <Icon name={icon} size={20} color={focused ? t.colors.primary : t.colors.tertiaryLabel} />}
         <TextInput
           ref={ref}
-          placeholderTextColor={t.colors.textMuted}
+          placeholderTextColor={t.colors.tertiaryLabel}
           selectionColor={t.colors.primary}
+          cursorColor={t.colors.primary}
           secureTextEntry={password && hidden}
           multiline={multiline}
           accessibilityLabel={label}
@@ -59,52 +53,53 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
           {...rest}
         />
         {password && (
-          <Pressable
-            onPress={() => setHidden((h) => !h)}
-            hitSlop={10}
-            accessibilityLabel={hidden ? 'Show password' : 'Hide password'}
-          >
-            <Ionicons name={hidden ? 'eye-outline' : 'eye-off-outline'} size={20} color={t.colors.textMuted} />
+          <Pressable onPress={() => setHidden((h) => !h)} hitSlop={10} accessibilityLabel={hidden ? 'Show password' : 'Hide password'}>
+            <Icon name={hidden ? 'eye-outline' : 'eye-off-outline'} size={20} color={t.colors.tertiaryLabel} />
           </Pressable>
         )}
       </View>
-      {error ? (
-        <Text variant="caption" tone="danger" style={styles.helper}>
-          {error}
-        </Text>
-      ) : hint ? (
-        <Text variant="caption" tone="muted" style={styles.helper}>
-          {hint}
-        </Text>
-      ) : null}
+      <AnimatePresence>
+        {error ? (
+          <MotiView key="error" from={{ opacity: 0, translateY: -4 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0 }} transition={{ type: 'timing', duration: 180 }}>
+            <Text variant="footnote" tone="danger" style={styles.helper}>
+              {error}
+            </Text>
+          </MotiView>
+        ) : hint ? (
+          <MotiView key="hint" from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ type: 'timing', duration: 180 }}>
+            <Text variant="footnote" tone="secondary" style={styles.helper}>
+              {hint}
+            </Text>
+          </MotiView>
+        ) : null}
+      </AnimatePresence>
     </View>
   );
 });
 
 const useStyles = makeStyles((t) => ({
   wrapper: { marginBottom: t.spacing.lg },
-  label: { marginBottom: 6, marginLeft: 2 },
+  label: { marginBottom: 6, marginLeft: 4 },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: t.spacing.sm + 2,
-    minHeight: 54,
+    minHeight: 50,
     paddingHorizontal: t.spacing.lg,
-    borderRadius: t.radius.lg,
-    backgroundColor: t.colors.surfaceMuted,
+    borderRadius: t.radius.md,
+    backgroundColor: t.colors.tertiaryFill,
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   multiline: { alignItems: 'flex-start', paddingVertical: t.spacing.md },
-  focused: { borderColor: t.colors.primary, backgroundColor: t.colors.surface },
+  focused: { borderColor: t.colors.primary, backgroundColor: t.colors.secondaryGroupedBackground },
   errored: { borderColor: t.colors.danger },
   input: {
     flex: 1,
-    fontFamily: t.fonts.medium,
-    fontSize: 16,
-    color: t.colors.text,
-    paddingVertical: 14,
+    ...t.type.body,
+    color: t.colors.label,
+    paddingVertical: 12,
   },
   inputMultiline: { minHeight: 72, textAlignVertical: 'top', paddingVertical: 0 },
-  helper: { marginTop: 6, marginLeft: 2 },
+  helper: { marginTop: 6, marginLeft: 4 },
 }));

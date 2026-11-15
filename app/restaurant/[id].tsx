@@ -7,9 +7,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { useFavorites, useRestaurant } from '../../src/hooks/queries';
+import { useAddresses, useFavorites, useRestaurant } from '../../src/hooks/queries';
 import MenuItemCard from '../../src/components/MenuItemCard';
 import FloatingCartButton from '../../src/components/FloatingCartButton';
+import AppMap from '../../src/components/map/AppMap';
+import { distanceKm, formatDistance, hasCoords } from '../../src/lib/geo';
 import { formatDeliveryTime, formatNaira, getErrorMessage } from '../../src/lib/format';
 import { RestaurantWithMenu } from '../../src/types';
 import { makeStyles, useTheme } from '../../src/theme';
@@ -169,9 +171,44 @@ function RestaurantInfo({ restaurant }: { restaurant: RestaurantWithMenu }) {
         </Text>
       )}
 
+      <LocationCard restaurant={restaurant} />
+
       <Text variant="heading" style={{ marginTop: t.spacing.xxl }}>
         Menu
       </Text>
+    </View>
+  );
+}
+
+/** Where the restaurant is, and how far from the customer's default address. */
+function LocationCard({ restaurant }: { restaurant: RestaurantWithMenu }) {
+  const t = useTheme();
+  const styles = useStyles();
+  const { data: addresses } = useAddresses();
+  if (!hasCoords(restaurant)) return null;
+  const home = addresses?.find((a) => a.isDefault) ?? addresses?.[0];
+  const km = hasCoords(home) ? distanceKm(restaurant, home) : null;
+
+  return (
+    <View style={styles.locationCard}>
+      <AppMap
+        markers={[{ id: restaurant.id, lat: restaurant.lat, lng: restaurant.lng, kind: 'restaurant' }]}
+        zoom={14.5}
+        interactive={false}
+        rounded={false}
+        style={{ height: 140 }}
+      />
+      <View style={styles.locationRow}>
+        <Ionicons name="location" size={18} color={t.colors.primary} />
+        <View style={{ flex: 1 }}>
+          <Text variant="bodyStrong" numberOfLines={1}>
+            {restaurant.address ?? 'See on map'}
+          </Text>
+          <Text variant="caption" tone="secondary">
+            {km !== null ? `${formatDistance(km)} from ${home?.label ?? 'you'}` : 'Add a delivery address to see the distance'}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -230,6 +267,14 @@ const useStyles = makeStyles((t) => ({
     backgroundColor: t.colors.surface,
     ...t.shadow(1),
   },
+  locationCard: {
+    marginTop: t.spacing.xl,
+    borderRadius: t.radius.lg,
+    overflow: 'hidden',
+    backgroundColor: t.colors.surface,
+    ...t.shadow(1),
+  },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: t.spacing.sm, padding: t.spacing.md },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
   statValue: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statDivider: { width: 1, backgroundColor: t.colors.border, marginVertical: 4 },

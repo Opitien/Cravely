@@ -14,7 +14,8 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { CartProvider, useCart } from '../src/context/CartContext';
-import { useOrdersRealtime } from '../src/hooks/queries';
+import { useOrdersRealtime, usePushRegistration } from '../src/hooks/queries';
+import { useNotificationNavigation } from '../src/lib/notifications';
 import { useTheme } from '../src/theme';
 import { EmptyState } from '../src/ui';
 
@@ -85,6 +86,9 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   const isSignedIn = !!session;
 
   useOrdersRealtime();
+  // Register this phone for order-status pushes while signed in; open the order when a notification is tapped.
+  usePushRegistration();
+  useNotificationNavigation(isSignedIn);
 
   // Opened a password-reset email link → go straight to "choose a new password".
   useEffect(() => {

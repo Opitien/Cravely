@@ -52,3 +52,4 @@ config.bat
 .env
 .env.*
 !.env.example
+env.txt

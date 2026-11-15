@@ -17,6 +17,10 @@ export interface Restaurant {
   deliveryFee: number;
   minOrder: number;
   isOpen: boolean;
+  /** Street address shown on the map card; null for older rows. */
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
 }
 
 export interface MenuItem {
@@ -61,9 +65,18 @@ export interface Address {
   phone: string;
   instructions: string | null;
   isDefault: boolean;
+  /** Pinned on the map; null when the address was typed without picking a point. */
+  lat: number | null;
+  lng: number | null;
 }
 
 export type NewAddress = Omit<Address, 'id'>;
+
+export interface PushTokenInput {
+  token: string;
+  platform: 'ios' | 'android' | 'web';
+  deviceName?: string;
+}
 
 export type OrderStatus =
   | 'pending_payment'

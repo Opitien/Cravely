@@ -16,6 +16,7 @@ import {
   PaymentMethod,
   PaymentStatus,
   Profile,
+  PushTokenInput,
   Restaurant,
   RestaurantWithMenu,
 } from '../types';
@@ -34,6 +35,9 @@ const toRestaurant = (r: any): Restaurant => ({
   deliveryFee: r.delivery_fee,
   minOrder: r.min_order,
   isOpen: r.is_open,
+  address: r.address ?? null,
+  lat: r.lat ?? null,
+  lng: r.lng ?? null,
 });
 
 const toMenuItem = (m: any): MenuItem => ({
@@ -55,6 +59,8 @@ const toAddress = (a: any): Address => ({
   phone: a.phone,
   instructions: a.instructions,
   isDefault: a.is_default,
+  lat: a.lat ?? null,
+  lng: a.lng ?? null,
 });
 
 const toOrder = (o: any): Order => ({
@@ -231,6 +237,8 @@ export async function createAddress(address: NewAddress): Promise<Address> {
       phone: address.phone.trim(),
       instructions: address.instructions?.trim() || null,
       is_default: makeDefault,
+      lat: address.lat ?? null,
+      lng: address.lng ?? null,
     })
     .select()
     .single();
@@ -315,4 +323,22 @@ export function verifyPayment(orderId: string) {
   return invokeFunction<{ payment_status: PaymentStatus; status: OrderStatus }>('paystack-verify', {
     order_id: orderId,
   });
+}
+
+// ─── Push notifications ─────────────────────────────────────
+
+/** Registers (or refreshes) this device's Expo push token for the signed-in user. */
+export async function savePushToken(input: PushTokenInput) {
+  const userId = await requireUserId();
+  const { error } = await supabase.from('push_tokens').upsert(
+    { token: input.token, user_id: userId, platform: input.platform, device_name: input.deviceName ?? null },
+    { onConflict: 'token' }
+  );
+  if (error) throw error;
+}
+
+/** Called on sign-out so the next account on this phone does not get this user's order alerts. */
+export async function removePushToken(token: string) {
+  const { error } = await supabase.from('push_tokens').delete().eq('token', token);
+  if (error) throw error;
 }

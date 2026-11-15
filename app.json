@@ -11,7 +11,8 @@
       "expo-router",
       "expo-web-browser",
       "expo-image",
-      "expo-font"
+      "expo-font",
+      "@maplibre/maplibre-react-native"
     ],
     "description": "Your cravings, delivered. A fast, modern food delivery experience.",
     "splash": {
@@ -39,6 +40,13 @@
     "web": {
       "output": "static",
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0cc3cbf3-8db8-43f4-8702-230046c891df"
+      }
+    },
+    "owner": "opitiene"
   }
 }

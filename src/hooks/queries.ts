@@ -2,10 +2,12 @@
  * React Query hooks: caching, loading/error state, retries and refetching
  * for every piece of server data the screens need.
  */
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../services/api';
 import { supabase } from '../lib/supabase';
+import { deviceLabel, PushRegistration, registerForPushAsync } from '../lib/notifications';
 import { useAuth } from '../context/AuthContext';
 import { NewAddress } from '../types';
 
@@ -172,4 +174,51 @@ export function useOrdersRealtime() {
       supabase.removeChannel(channel);
     };
   }, [user, qc]);
+}
+
+// ─── Push notifications ─────────────────────────────────────
+
+/**
+ * While signed in: ask for permission once, register the Expo push token for this device,
+ * and forget it again on sign-out. Failures are logged, never shown — the app works without push.
+ */
+export function usePushRegistration() {
+  const { user } = useAuth();
+  const tokenRef = useRef<string | null>(null);
+  const [status, setStatus] = useState<PushRegistration['status'] | 'idle'>('idle');
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      const token = tokenRef.current;
+      tokenRef.current = null;
+      if (token) api.removePushToken(token).catch(() => undefined);
+      setStatus('idle');
+      return;
+    }
+    (async () => {
+      const result = await registerForPushAsync();
+      if (cancelled) return;
+      setStatus(result.status);
+      if (result.status !== 'ok') {
+        console.log('[push] not registered:', result.reason);
+        return;
+      }
+      tokenRef.current = result.token;
+      try {
+        await api.savePushToken({
+          token: result.token,
+          platform: Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web',
+          deviceName: deviceLabel(),
+        });
+      } catch (e) {
+        console.warn('[push] could not save token', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  return status;
 }

@@ -3,8 +3,10 @@ import { Alert, RefreshControl, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys, useCancelOrder, useOrder } from '../../src/hooks/queries';
+import { queryKeys, useCancelOrder, useOrder, useRestaurant } from '../../src/hooks/queries';
 import { getRestaurantById } from '../../src/services/api';
+import AppMap, { MapMarker } from '../../src/components/map/AppMap';
+import { distanceKm, estimateRideMinutes, formatDistance, hasCoords } from '../../src/lib/geo';
 import { useCart } from '../../src/context/CartContext';
 import { PAYMENT_METHOD_DETAILS } from '../../src/components/PaymentMethodCard';
 import { CartItem, Order, OrderStatus } from '../../src/types';
@@ -134,6 +136,8 @@ export default function OrderDetailScreen() {
 
       {order.status !== 'cancelled' && order.status !== 'pending_payment' && <Timeline order={order} />}
 
+      {order.status !== 'cancelled' && <DeliveryMap order={order} />}
+
       {/* Items */}
       <Card>
         <Text variant="subheading" style={{ marginBottom: t.spacing.md }}>
@@ -171,6 +175,49 @@ export default function OrderDetailScreen() {
         <Button title="Cancel order" variant="ghost" onPress={confirmCancel} loading={cancel.isPending} style={{ marginTop: -4 }} />
       )}
     </ScrollView>
+  );
+}
+
+/** Restaurant → delivery address on a map, with distance and a rough rider ETA. */
+function DeliveryMap({ order }: { order: Order }) {
+  const t = useTheme();
+  const styles = useStyles();
+  const { data: restaurant } = useRestaurant(order.restaurantId);
+  const home = order.deliveryAddress;
+  const hasHome = hasCoords(home);
+  const hasRestaurant = hasCoords(restaurant);
+  if (!hasHome && !hasRestaurant) return null;
+
+  const markers: MapMarker[] = [];
+  if (hasRestaurant) markers.push({ id: 'restaurant', lat: restaurant.lat, lng: restaurant.lng, kind: 'restaurant', label: order.restaurantName });
+  if (hasHome) markers.push({ id: 'home', lat: home.lat, lng: home.lng, kind: 'home', label: home.label });
+  const route = hasHome && hasRestaurant ? [{ lat: restaurant.lat, lng: restaurant.lng }, { lat: home.lat, lng: home.lng }] : undefined;
+  const km = route ? distanceKm(route[0], route[1]) : null;
+  const enRoute = order.status === 'on_the_way';
+
+  return (
+    <Card padded={false} style={{ overflow: 'hidden' }}>
+      <AppMap markers={markers} route={route} fit={markers.length > 1} rounded={false} style={{ height: 200 }} interactive={false} />
+      <View style={styles.mapFooter}>
+        <View style={[styles.infoIcon, enRoute && { backgroundColor: t.colors.infoSoft }]}>
+          <Ionicons name={enRoute ? 'bicycle' : 'navigate'} size={18} color={enRoute ? t.colors.info : t.colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text variant="bodyStrong">
+            {km !== null ? `${formatDistance(km)} from ${order.restaurantName}` : hasHome ? 'Delivering to your pin' : order.restaurantName}
+          </Text>
+          <Text variant="caption" tone="secondary">
+            {km !== null
+              ? enRoute
+                ? `About ${estimateRideMinutes(km)} min by bike`
+                : `Roughly ${estimateRideMinutes(km)} min ride once the rider leaves`
+              : hasHome
+                ? `${home.line1}, ${home.city}`
+                : restaurant?.address ?? ''}
+          </Text>
+        </View>
+      </View>
+    </Card>
   );
 }
 
@@ -259,6 +306,7 @@ const useStyles = makeStyles((t) => ({
   stepLineDone: { backgroundColor: t.colors.success },
   stepText: { flex: 1, paddingTop: 4, paddingBottom: t.spacing.lg },
   infoLine: { flexDirection: 'row', gap: t.spacing.md },
+  mapFooter: { flexDirection: 'row', alignItems: 'center', gap: t.spacing.md, padding: t.spacing.lg },
   infoIcon: {
     width: 36,
     height: 36,

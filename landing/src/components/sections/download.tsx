@@ -5,12 +5,13 @@ import { EASE } from "@/lib/gsap";
 import { site } from "@/lib/site";
 import { AndroidIcon, AppleIcon, QrIcon, ShieldIcon } from "../icons";
 import { MagneticLink, Reveal, SplitHeading } from "../motion-primitives";
+import { QrCode } from "../qr-code";
 
 /** Download block. The APK link comes from NEXT_PUBLIC_ANDROID_APK_URL at build time; until then it shows "coming today". */
 export function Download() {
   const apk = site.androidApk;
   return (
-    <section id="download" className="container-page scroll-mt-24 pt-24 pb-8 md:pt-36">
+    <section id="download" className="container-page scroll-mt-24 pt-12 pb-8 md:pt-20">
       <div className="relative overflow-hidden rounded-[32px] bg-navy px-6 py-12 text-white md:px-14 md:py-20">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute top-[-40%] right-[-10%] size-[520px] rounded-full bg-[radial-gradient(closest-side,rgba(255,90,95,0.45),transparent)]" />
@@ -58,14 +59,23 @@ export function Download() {
             transition={{ duration: 1, ease: EASE, delay: 0.2 }}
             className="mx-auto w-full max-w-[300px] rounded-[28px] bg-white p-5 text-ink shadow-[0_40px_80px_-30px_rgba(0,0,0,0.6)]"
           >
-            <div className="grid aspect-square place-items-center rounded-2xl bg-peach text-faint" aria-label="QR code placeholder">
-              <div className="flex flex-col items-center gap-2 text-center">
-                <QrIcon className="size-14 text-coral" />
-                <p className="px-6 text-[12px] font-semibold">QR code appears here once the APK is live</p>
+            {apk ? (
+              <div className="relative grid aspect-square place-items-center rounded-2xl bg-white p-3">
+                <QrCode value={apk} label="QR code: download the Cravely Android APK" className="size-full" />
+                <span className="pointer-events-none absolute grid size-12 place-items-center rounded-2xl bg-white shadow-[0_6px_20px_-6px_rgba(0,0,0,0.35)]">
+                  <span className="grid size-9 place-items-center rounded-xl bg-coral text-[18px]">🍽️</span>
+                </span>
               </div>
-            </div>
+            ) : (
+              <div className="grid aspect-square place-items-center rounded-2xl bg-peach text-faint" aria-label="QR code placeholder">
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <QrIcon className="size-14 text-coral" />
+                  <p className="px-6 text-[12px] font-semibold">QR code appears here once the APK is live</p>
+                </div>
+              </div>
+            )}
             <p className="mt-4 text-center text-[14px] font-extrabold">Scan with your phone</p>
-            <p className="mt-1 text-center text-[12px] font-medium text-mute">Opens the download directly on Android</p>
+            <p className="mt-1 text-center text-[12px] font-medium text-mute">{apk ? "Starts the Android download straight away" : "Opens the download directly on Android"}</p>
           </motion.div>
         </div>
       </div>

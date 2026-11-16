@@ -82,7 +82,7 @@ export function Tracking() {
             </div>
           </div>
 
-          <ol data-list className="flex flex-col gap-10 lg:gap-[36vh] lg:py-[14vh]">
+          <ol data-list className="flex flex-col gap-10 lg:gap-[22vh] lg:pt-[6vh] lg:pb-0">
             {STEPS.map((s, i) => (
               <li key={s.key} data-copy className="max-w-[460px]">
                 <div className="flex items-center gap-3">

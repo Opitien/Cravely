@@ -9,8 +9,10 @@ export const site = {
   supportEmail: "support@cravely.app",
   privacyPolicy: "https://cravely.app/privacy",
   terms: "https://cravely.app/terms",
-  // Set NEXT_PUBLIC_ANDROID_APK_URL on Vercel once the EAS build is ready.
-  androidApk: process.env.NEXT_PUBLIC_ANDROID_APK_URL || "",
+  // NEXT_PUBLIC_ANDROID_APK_URL on Vercel overrides this; the default is the latest EAS preview build.
+  androidApk:
+    process.env.NEXT_PUBLIC_ANDROID_APK_URL ||
+    "https://expo.dev/artifacts/eas/pD04A3K9SPXvmZdIA9ihWSCM0rPK8GLMVaJPiZho4fY.apk",
   androidPackage: "com.cravely.app",
 };
 

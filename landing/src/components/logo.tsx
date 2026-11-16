@@ -5,11 +5,16 @@ export function Logo({ className, mark = true }: { className?: string; mark?: bo
   return (
     <span className={clsx("inline-flex items-center gap-2.5 font-extrabold tracking-[-0.03em]", className)}>
       {mark && (
-        <span aria-hidden className="grid size-[1.5em] place-items-center rounded-[0.45em] bg-coral text-white shadow-[0_6px_14px_-6px_rgba(255,90,95,0.8)]">
-          <svg viewBox="0 0 24 24" className="size-[0.95em]" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M16.5 8.5a5.5 5.5 0 1 0 0 7" />
-          </svg>
-        </span>
+        // The real app icon (same file as the Android/iOS icon), not a stand-in glyph.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/icon.png"
+          alt=""
+          aria-hidden
+          width={48}
+          height={48}
+          className="size-[1.5em] rounded-[0.45em] object-cover shadow-[0_6px_14px_-6px_rgba(19,25,41,0.6)]"
+        />
       )}
       <span>Cravely</span>
     </span>

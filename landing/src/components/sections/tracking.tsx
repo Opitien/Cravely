@@ -110,17 +110,19 @@ export function Tracking() {
           <Reveal>
             <p className="text-[13px] font-extrabold tracking-[0.12em] text-coral uppercase">Tracking & notifications</p>
           </Reveal>
-          <SplitHeading className="mt-3 text-[30px] sm:text-[40px] lg:text-[52px]" lines={[{ text: "Know where your food is," }, { text: "without opening the app.", muted: true }]} />
+          <SplitHeading className="mt-3 text-[26px] sm:text-[38px] lg:text-[52px]" lines={[{ text: "Know where your food is," }, { text: "without opening the app.", muted: true }]} />
         </div>
 
-        <div className="mt-8 grid items-center gap-8 md:mt-10 md:grid-cols-[0.9fr_1.1fr] lg:gap-16">
-          <div className="flex justify-center md:justify-start">
-            <div className="relative origin-top scale-[0.72] sm:scale-[0.85] md:origin-center md:scale-100 [@media(max-height:760px)]:md:scale-[0.82]">
+        <div className="mt-5 grid items-center gap-3 md:mt-10 md:grid-cols-[0.9fr_1.1fr] md:gap-8 lg:gap-16">
+          {/* Phones: show the top of the handset only (cropped, fading out) so the step copy stays on screen while held. */}
+          <div className={clsx("relative flex justify-center md:justify-start", held && "h-[270px] overflow-hidden md:h-auto md:overflow-visible")}>
+            <div className="relative origin-top scale-[0.78] md:origin-center md:scale-100 [@media(max-height:760px)]:md:scale-[0.82]">
               <div aria-hidden className="absolute inset-0 -z-10 translate-y-6 scale-[0.85] rounded-full bg-[radial-gradient(closest-side,rgba(255,90,95,0.25),transparent)]" />
               <PhoneFrame>
                 <TrackingScreen step={step} />
               </PhoneFrame>
             </div>
+            {held && <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-cream to-transparent md:hidden" />}
           </div>
 
           {held ? (
@@ -145,7 +147,7 @@ export function Tracking() {
               </div>
 
               {/* copy blocks stacked in place; only the active one is visible */}
-              <div className="relative mt-8 min-h-[280px] overflow-hidden md:min-h-[320px]">
+              <div className="relative mt-5 min-h-[236px] overflow-hidden md:mt-8 md:min-h-[320px]">
                 {STEPS.map((s, i) => (
                   <div
                     key={s.key}
@@ -158,7 +160,7 @@ export function Tracking() {
                       <span className="grid size-11 place-items-center rounded-2xl bg-coral text-white">
                         <s.Icon className="size-5" />
                       </span>
-                      <span className="text-[13px] font-extrabold tracking-[0.1em] text-coral uppercase">{s.label}</span>
+                      <span className="text-[13px] font-extrabold tracking-[0.1em] text-coral uppercase">Live status update</span>
                     </div>
                     <h3 data-line className="mt-4 text-[26px] leading-[1.15] font-extrabold tracking-[-0.02em] md:text-[32px]">
                       {s.label}

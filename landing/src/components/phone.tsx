@@ -180,7 +180,7 @@ export function TrackingScreen({ step }: { step: number }) {
       </div>
 
       {/* toast from the notification bar */}
-      <div className="absolute inset-x-3 top-3" data-toast key={current.key}>
+      <div className="absolute inset-x-3 top-11" data-toast key={current.key}>
         <div className="flex items-start gap-2.5 rounded-[16px] bg-navy/95 px-3 py-2.5 text-white shadow-[0_18px_40px_-20px_rgba(0,0,0,0.6)] backdrop-blur">
           <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-[7px] bg-coral text-[11px]">🍽️</span>
           <div className="min-w-0 leading-tight">

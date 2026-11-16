@@ -66,17 +66,37 @@ export function Tracking() {
     { scope },
   );
 
-  // Swap the copy and slide the toast in whenever the step changes.
+  // Vertical cascade: the new step rises in from below while the previous one lifts up and out (reversed when
+  // scrolling back). The toast slides into the phone on every change.
+  const shownStep = useRef(0);
   useGSAP(
     () => {
       if (!held || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       const root = scope.current;
       if (!root) return;
-      const copy = root.querySelector(`[data-copy="${step}"]`);
-      const toast = root.querySelector("[data-toast]");
-      if (copy) {
-        gsap.fromTo(copy.querySelectorAll("[data-line]"), { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, stagger: 0.07, ease: "expo.out", overwrite: true });
+      const prev = shownStep.current;
+      shownStep.current = step;
+      const forward = step >= prev;
+      const incoming = root.querySelector<HTMLElement>(`[data-copy="${step}"]`);
+      const outgoing = prev !== step ? root.querySelector<HTMLElement>(`[data-copy="${prev}"]`) : null;
+      const all = root.querySelectorAll<HTMLElement>("[data-copy]");
+      all.forEach((el) => {
+        if (el !== incoming && el !== outgoing) gsap.set(el, { autoAlpha: 0 });
+      });
+      if (outgoing) {
+        gsap.to(outgoing, { y: forward ? -72 : 72, autoAlpha: 0, duration: 0.45, ease: "power3.in", overwrite: true });
+        gsap.to(outgoing.querySelectorAll("[data-line]"), { y: forward ? -18 : 18, duration: 0.45, stagger: forward ? 0.03 : -0.03, ease: "power3.in", overwrite: true });
       }
+      if (incoming) {
+        gsap.set(incoming, { autoAlpha: 1, zIndex: 2 });
+        gsap.fromTo(incoming, { y: forward ? 96 : -96, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.7, delay: outgoing ? 0.12 : 0, ease: "expo.out", overwrite: true });
+        gsap.fromTo(
+          incoming.querySelectorAll("[data-line]"),
+          { y: forward ? 40 : -40, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.7, delay: outgoing ? 0.18 : 0.05, stagger: forward ? 0.08 : -0.08, ease: "expo.out", overwrite: true },
+        );
+      }
+      const toast = root.querySelector("[data-toast]");
       if (toast) gsap.fromTo(toast, { y: -40, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.7, ease: "expo.out" });
     },
     { scope, dependencies: [step, held] },
@@ -125,13 +145,14 @@ export function Tracking() {
               </div>
 
               {/* copy blocks stacked in place; only the active one is visible */}
-              <div className="relative mt-8 min-h-[260px] md:min-h-[300px]">
+              <div className="relative mt-8 min-h-[280px] overflow-hidden md:min-h-[320px]">
                 {STEPS.map((s, i) => (
                   <div
                     key={s.key}
                     data-copy={i}
                     aria-hidden={i !== step}
-                    className={clsx("absolute inset-0 max-w-[460px] transition-opacity duration-300", i === step ? "opacity-100" : "pointer-events-none opacity-0")}
+                    className={clsx("absolute inset-0 max-w-[460px] will-change-transform", i !== step && "pointer-events-none")}
+                    style={i === 0 ? undefined : { opacity: 0, visibility: "hidden" }}
                   >
                     <div data-line className="flex items-center gap-3">
                       <span className="grid size-11 place-items-center rounded-2xl bg-coral text-white">

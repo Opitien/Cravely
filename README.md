@@ -74,6 +74,57 @@ npm start
 - Before submitting to the stores, replace the URLs in `src/constants/Links.ts` with your real
   privacy policy, terms and support email.
 
+## 5. Custom auth emails (Resend)
+
+By default Supabase sends confirmation/reset emails from its own shared mailer (low rate limit, generic
+template, and genuinely not meant for production). Point it at [Resend](https://resend.com) instead and
+use the branded templates in `supabase/email-templates/`:
+
+1. **Fix the localhost redirect first.** Supabase → **Authentication → URL Configuration → Site URL** is
+   probably still the default `http://localhost:3000` — that's why confirmation links land on localhost.
+   Set it to `https://getcravely.vercel.app` (or your custom domain), and make sure **Redirect URLs**
+   includes `cravely://**`, `exp://**`, and that same web URL.
+2. **Resend account.** Sign up at resend.com. Without a verified domain you can still send, but only to
+   the email address you signed up with (Resend's test-mode restriction) — fine for trying this out, but
+   real users' confirmation emails won't arrive until you verify a domain (Domains → Add Domain → add the
+   DNS records it gives you). Any domain works, it doesn't need to match the app.
+3. **Get an API key.** Resend dashboard → API Keys → Create API Key.
+4. **Point Supabase's SMTP at Resend.** Supabase → Authentication → **SMTP Settings** → enable custom SMTP:
+   - Host: `smtp.resend.com`
+   - Port: `465` (or `587`)
+   - Username: `resend`
+   - Password: the API key from step 3
+   - Sender email: an address on your verified domain (e.g. `cravely@yourdomain.com`); until a domain is
+     verified, Resend only accepts `onboarding@resend.dev` as the sender.
+5. **Swap in the branded templates.** Supabase → Authentication → **Email Templates**:
+   - **Confirm signup** → paste `supabase/email-templates/confirm-signup.html`
+   - **Reset password** → paste `supabase/email-templates/reset-password.html`
+
+   Both use Supabase's own `{{ .ConfirmationURL }}` / `{{ .Email }}` variables, so no other config changes.
+
+## 6. Push notifications (Firebase)
+
+The app already does everything on its side — permission + token registration (`src/lib/notifications.ts`),
+token storage (`push_tokens` table), and a database trigger that calls the Expo Push API whenever an
+order's status changes (`supabase/migrations/20261115000000_maps_and_push.sql`). All that's missing is
+Firebase credentials, because Expo's push service delivers Android notifications through FCM:
+
+1. **Create a Firebase project** at [console.firebase.google.com](https://console.firebase.google.com) (free).
+2. **Add an Android app** to it with package name `com.cravely.app` (matches `app.json` → `android.package`).
+   Download the generated **`google-services.json`** and drop it in the project root — `app.config.js`
+   picks it up automatically if it exists.
+3. **Enable the Cloud Messaging API (V1)**: Firebase project → ⚙️ Project settings → Cloud Messaging —
+   turn it on if it isn't already.
+4. **Create a service account key** for FCM: Google Cloud Console → IAM & Admin → Service Accounts →
+   the Firebase-generated one → Keys → Add key → JSON. This is what EAS needs to send pushes on your behalf.
+5. **Upload it to EAS**: `eas credentials` → Android → select your profile → Google Service Account →
+   upload the JSON from step 4.
+6. Rebuild with `eas build --profile production` (a Firebase-less build silently falls back to
+   `{ status: 'error' }` from `registerForPushAsync`, which is what you're seeing until this is done).
+
+Apply the `maps_and_push` migration if you haven't (`supabase db push`, or paste it in the SQL editor) —
+that's what creates `push_tokens` and the order-status trigger.
+
 ## Operating the restaurant side
 
 There is no restaurant dashboard yet. Until there is, manage data in the Supabase Table Editor:
